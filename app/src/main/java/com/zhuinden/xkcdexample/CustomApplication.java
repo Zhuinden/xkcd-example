@@ -30,7 +30,6 @@ public class CustomApplication
         executor = Executors.newSingleThreadExecutor();
         Realm.init(this);
         RealmConfiguration realmConfiguration = new RealmConfiguration.Builder() //
-                .inMemory() //
                 .deleteRealmIfMigrationNeeded() //
                 .build();
         Realm.setDefaultConfiguration(realmConfiguration);

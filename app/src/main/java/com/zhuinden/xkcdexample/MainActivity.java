@@ -1,11 +1,9 @@
 package com.zhuinden.xkcdexample;
 
-import android.annotation.TargetApi;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -21,7 +19,6 @@ import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class MainActivity
         extends AppCompatActivity {
@@ -92,12 +89,16 @@ public class MainActivity
 
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
         if(!realm.isClosed()) {
-            xkcdComic = realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
+            xkcdComic = getCurrentXkcdComic();
             if(xkcdComic != null) {
                 updateUi(xkcdComic);
             }
         }
     };
+
+    private XkcdComic getCurrentXkcdComic() {
+        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
+    }
 
     private void updateUi(XkcdComic xkcdComic) {
         getSupportActionBar().setTitle(xkcdComic.getTitle());
@@ -122,6 +123,10 @@ public class MainActivity
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
         executor = CustomApplication.get(this).executor();
 
+        xkcdComic = getCurrentXkcdComic();
+        if(xkcdComic != null) {
+            updateUi(xkcdComic);
+        }
         if(current == 0) {
             executor.execute(() -> {
                 try {
