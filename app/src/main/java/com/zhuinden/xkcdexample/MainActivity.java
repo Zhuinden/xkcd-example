@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import java.io.IOException;
 import java.util.Random;
@@ -117,7 +118,7 @@ public class MainActivity
 
     private void updateUi(XkcdComic xkcdComic) {
         getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
-        Glide.with(this).load(xkcdComic.getImg()).into(image);
+        Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
     }
 
     @Override
