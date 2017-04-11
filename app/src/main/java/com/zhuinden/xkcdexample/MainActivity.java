@@ -1,7 +1,6 @@
 package com.zhuinden.xkcdexample;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,7 +16,6 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -253,6 +251,9 @@ public class MainActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
+            case R.id.action_latest:
+                downloadDefault();
+                return true;
             case R.id.action_jump:
                 openJumpDialog();
                 return true;
@@ -295,7 +296,7 @@ public class MainActivity
                 try(Realm r = Realm.getDefaultInstance()) {
                     r.executeTransaction(realm -> {
                         realm.insertOrUpdate(xkcdComic);
-                        if(current == 0) {
+                        if(current == 0 || xkcdComic.getNum() > max) {
                             max = xkcdComic.getNum();
                         }
                         current = xkcdComic.getNum();

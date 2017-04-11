@@ -7,4 +7,5 @@
     <string name="jump">Jump</string>
     <string name="cancel">Cancel</string>
     <string name="retry">Retry</string>
+    <string name="latest_comic">Latest Comic</string>
 </resources>
