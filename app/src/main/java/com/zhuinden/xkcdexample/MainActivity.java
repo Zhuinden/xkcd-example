@@ -94,7 +94,7 @@ public class MainActivity
 
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
-        if(xkcdComic != null && xkcdComic.getLink() != null) {
+        if(xkcdComic != null && xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(xkcdComic.getLink()));
             startActivity(intent);
         }
@@ -129,7 +129,7 @@ public class MainActivity
     }
 
     private void updateUi(XkcdComic xkcdComic) {
-        getSupportActionBar().setTitle(xkcdComic.getTitle());
+        getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
         Glide.with(this).load(xkcdComic.getImg()).into(image);
     }
 
