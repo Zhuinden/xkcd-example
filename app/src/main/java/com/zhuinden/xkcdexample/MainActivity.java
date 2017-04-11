@@ -66,30 +66,7 @@ public class MainActivity
 
     @SuppressWarnings("NewApi")
     private void downloadCurrent() {
-        executor.execute(() -> {
-            try {
-                isDownloading = true;
-                Response<XkcdResponse> _xkcdResponse = xkcdService.getNumber(current).execute();
-                handleXkcdResponse(_xkcdResponse);
-            } catch(IOException e) {
-                Log.e(TAG, "Could not download XKCD data", e);
-            } finally {
-                isDownloading = false;
-            }
-        });
-    }
-
-    @SuppressWarnings("NewApi")
-    private void handleXkcdResponse(Response<XkcdResponse> _xkcdResponse) {
-        XkcdResponse xkcdResponse = _xkcdResponse.body();
-        XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-        try(Realm r = Realm.getDefaultInstance()) {
-            r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
-        }
-        if(current == 0) {
-            max = xkcdComic.getNum();
-        }
-        current = xkcdComic.getNum();
+        executor.execute(new DownloadTask((service -> service.getNumber(current).execute())));
     }
 
     @OnLongClick(R.id.xkcd_image)
@@ -167,17 +144,7 @@ public class MainActivity
             updateUi(xkcdComic);
         }
         if(current == 0) {
-            executor.execute(() -> {
-                try {
-                    isDownloading = true;
-                    Response<XkcdResponse> xkcdResponse = xkcdService.getDefault().execute();
-                    handleXkcdResponse(xkcdResponse);
-                } catch(IOException e) {
-                    Log.e(TAG, "Could not download XKCD data", e);
-                } finally {
-                    isDownloading = false;
-                }
-            });
+            executor.execute(new DownloadTask((service -> service.getDefault().execute())));
         }
     }
 
@@ -194,5 +161,41 @@ public class MainActivity
         realm.close();
         realm = null;
         super.onDestroy();
+    }
+
+    private interface MethodSelector {
+        Response<XkcdResponse> selectMethod(XkcdService xkcdService)
+                throws IOException;
+    }
+
+    private class DownloadTask
+            implements Runnable {
+        MethodSelector methodSelector;
+
+        public DownloadTask(MethodSelector methodSelector) {
+            this.methodSelector = methodSelector;
+        }
+
+        @Override
+        @SuppressWarnings("NewApi")
+        public void run() {
+            try {
+                isDownloading = true;
+                Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService);
+                XkcdResponse xkcdResponse = _xkcdResponse.body();
+                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
+                try(Realm r = Realm.getDefaultInstance()) {
+                    r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
+                }
+                if(current == 0) {
+                    max = xkcdComic.getNum();
+                }
+                current = xkcdComic.getNum();
+            } catch(IOException e) {
+                Log.e(TAG, "Could not download XKCD data", e);
+            } finally {
+                isDownloading = false;
+            }
+        }
     }
 }
