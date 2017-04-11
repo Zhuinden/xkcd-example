@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">xkcdexample</string>
+    <string name="app_name">XKCD Viewer</string>
     <string name="previous">Previous</string>
     <string name="next">Next</string>
     <string name="random_comic">Random Comic</string>
