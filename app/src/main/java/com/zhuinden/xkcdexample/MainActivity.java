@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -311,10 +310,29 @@ public class MainActivity
                     });
                 }
             } catch(IOException e) {
-                Log.e(TAG, "Could not download XKCD data", e);
+                runOnUiThread(MainActivity.this::handleNetworkError);
             } finally {
                 isDownloading = false;
             }
         }
+    }
+
+    private void handleNetworkError() {
+        if(current != 0) { // not first start-up
+            showNetworkError();
+            return;
+        }
+        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
+        if(maxNum == null) { // no image downloaded yet at all
+            showNetworkError();
+            return;
+        }
+        // handle if no internet but can reload from cache
+        max = maxNum.intValue();
+        modifyCurrentAndUpdateComic(max);
+    }
+
+    private void showNetworkError() {
+        Toast.makeText(MainActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
     }
 }

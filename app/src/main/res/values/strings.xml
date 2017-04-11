@@ -9,4 +9,5 @@
     <string name="retry">Retry</string>
     <string name="latest_comic">Latest Comic</string>
     <string name="open_in_browser">Open in Browser</string>
+    <string name="please_retry_with_active_internet">Please retry with an active internet connection.</string>
 </resources>
