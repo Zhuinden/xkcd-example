@@ -56,16 +56,11 @@ public class MainActivity
     }
 
     private void openOrDownloadCurrent() {
-        XkcdComic xkcdComic = getCurrentXkcdComic();
-        if(xkcdComic == null) {
+        if(!queryAndShowComicIfExists()) {
             downloadCurrent();
-        } else {
-            this.xkcdComic = xkcdComic;
-            updateUi(xkcdComic);
         }
     }
 
-    @SuppressWarnings("NewApi")
     private void downloadCurrent() {
         executor.execute(new DownloadTask((service -> service.getNumber(current).execute())));
     }
@@ -105,12 +100,23 @@ public class MainActivity
 
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
         if(!realm.isClosed()) {
-            xkcdComic = getCurrentXkcdComic();
-            if(xkcdComic != null) {
-                updateUi(xkcdComic);
-            }
+            queryAndShowComicIfExists();
         }
     };
+
+    private boolean queryAndShowComicIfExists() {
+        XkcdComic xkcdComic = getCurrentXkcdComic();
+        if(xkcdComic != null) {
+            storeAndOpenComic(xkcdComic);
+            return true;
+        }
+        return false;
+    }
+
+    private void storeAndOpenComic(XkcdComic xkcdComic) {
+        this.xkcdComic = xkcdComic;
+        updateUi(xkcdComic);
+    }
 
     private XkcdComic getCurrentXkcdComic() {
         return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
@@ -140,10 +146,7 @@ public class MainActivity
         executor = CustomApplication.get(this).executor();
         random = CustomApplication.get(this).random();
 
-        xkcdComic = getCurrentXkcdComic();
-        if(xkcdComic != null) {
-            updateUi(xkcdComic);
-        }
+        queryAndShowComicIfExists();
         if(current == 0) {
             executor.execute(new DownloadTask((service -> service.getDefault().execute())));
         }
@@ -186,12 +189,14 @@ public class MainActivity
                 XkcdResponse xkcdResponse = _xkcdResponse.body();
                 XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
                 try(Realm r = Realm.getDefaultInstance()) {
-                    r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
+                    r.executeTransaction(realm -> {
+                        realm.insertOrUpdate(xkcdComic);
+                        if(current == 0) {
+                            max = xkcdComic.getNum();
+                        }
+                        current = xkcdComic.getNum();
+                    });
                 }
-                if(current == 0) {
-                    max = xkcdComic.getNum();
-                }
-                current = xkcdComic.getNum();
             } catch(IOException e) {
                 Log.e(TAG, "Could not download XKCD data", e);
             } finally {
