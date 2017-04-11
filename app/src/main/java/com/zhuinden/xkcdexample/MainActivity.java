@@ -87,8 +87,7 @@ public class MainActivity
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
         if(xkcdComic != null && xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(xkcdComic.getLink()));
-            startActivity(intent);
+            openUriWithBrowser(Uri.parse(xkcdComic.getLink()));
         }
     }
 
@@ -264,8 +263,16 @@ public class MainActivity
                     downloadCurrent();
                 }
                 return true;
+            case R.id.action_open_browser:
+                openUriWithBrowser(Uri.parse("https://xkcd.com/" + current));
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openUriWithBrowser(Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 
     private void downloadDefault() {
