@@ -4,5 +4,5 @@ I made this as a demonstration on how to use **Retrofit**, **Glide**, and **Real
 
 So the logic is all pretty much in `MainActivity`.
 
-![Screenshot](https://raw.githubusercontent.com/zhuinden/xkcd-example/master/xkcd-app.PNG)
+![Screenshot](https://raw.githubusercontent.com/zhuinden/xkcd-example/master/xkcd-app.jpg)
 
