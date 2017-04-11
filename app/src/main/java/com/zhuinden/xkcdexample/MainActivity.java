@@ -115,7 +115,7 @@ public class MainActivity
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_jump, null, false);
         final EditText jumpNumbers = ButterKnife.findById(dialogView, R.id.jump_numbers);
         jumpDialog = new AlertDialog.Builder(this) //
-                .setTitle(R.string.jump_to)
+                .setTitle(R.string.jump_to) //
                 .setView(dialogView) //
                 .setPositiveButton(R.string.jump, (dialog, which) -> {
                     String _number = jumpNumbers.getText().toString();
@@ -180,7 +180,7 @@ public class MainActivity
 
         queryAndShowComicIfExists();
         if(current == 0) {
-            executor.execute(new DownloadTask((service -> service.getDefault().execute())));
+            downloadDefault();
         }
     }
 
@@ -211,11 +211,23 @@ public class MainActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_jump) {
-            openJumpDialog();
-            return true;
+        switch(item.getItemId()) {
+            case R.id.action_jump:
+                openJumpDialog();
+                return true;
+            case R.id.action_retry:
+                if(current == 0) {
+                    downloadDefault();
+                } else {
+                    downloadCurrent();
+                }
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void downloadDefault() {
+        executor.execute(new DownloadTask((service -> service.getDefault().execute())));
     }
 
     private interface MethodSelector {
