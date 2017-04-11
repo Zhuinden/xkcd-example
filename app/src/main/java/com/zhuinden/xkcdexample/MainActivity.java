@@ -49,19 +49,26 @@ public class MainActivity
             try {
                 isDownloading = true;
                 Response<XkcdResponse> _xkcdResponse = xkcdService.getNumber(current).execute();
-                XkcdResponse xkcdResponse = _xkcdResponse.body();
-                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                try(Realm r = Realm.getDefaultInstance()) {
-                    r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
-                    current = xkcdComic.getNum();
-                    max = xkcdComic.getNum();
-                }
+                handleXkcdResponse(_xkcdResponse);
             } catch(IOException e) {
                 Log.e(TAG, "Could not download XKCD data", e);
             } finally {
                 isDownloading = false;
             }
         });
+    }
+
+    @SuppressWarnings("NewApi")
+    private void handleXkcdResponse(Response<XkcdResponse> _xkcdResponse) {
+        XkcdResponse xkcdResponse = _xkcdResponse.body();
+        XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
+        try(Realm r = Realm.getDefaultInstance()) {
+            r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
+        }
+        if(current == 0) {
+            max = xkcdComic.getNum();
+        }
+        current = xkcdComic.getNum();
     }
 
     @OnLongClick(R.id.xkcd_image)
@@ -131,14 +138,8 @@ public class MainActivity
             executor.execute(() -> {
                 try {
                     isDownloading = true;
-                    Response<XkcdResponse> _xkcdResponse = xkcdService.getDefault().execute();
-                    XkcdResponse xkcdResponse = _xkcdResponse.body();
-                    XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                    try(Realm r = Realm.getDefaultInstance()) {
-                        r.executeTransaction(realm -> realm.insertOrUpdate(xkcdComic));
-                    }
-                    current = xkcdComic.getNum();
-                    max = xkcdComic.getNum();
+                    Response<XkcdResponse> xkcdResponse = xkcdService.getDefault().execute();
+                    handleXkcdResponse(xkcdResponse);
                 } catch(IOException e) {
                     Log.e(TAG, "Could not download XKCD data", e);
                 } finally {
