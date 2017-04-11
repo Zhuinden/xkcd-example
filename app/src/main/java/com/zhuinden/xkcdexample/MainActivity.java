@@ -1,16 +1,23 @@
 package com.zhuinden.xkcdexample;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -118,15 +125,45 @@ public class MainActivity
                 .setTitle(R.string.jump_to) //
                 .setView(dialogView) //
                 .setPositiveButton(R.string.jump, (dialog, which) -> {
-                    String _number = jumpNumbers.getText().toString();
-                    if(!"".equals(_number)) {
-                        int number = Integer.parseInt(_number);
-                        openOrDownloadByNumber(number);
-                    }
+                    startJumpToNumber(jumpNumbers);
+                    hideKeyboard(jumpNumbers);
                 }).setNegativeButton(R.string.cancel, (dialog, which) -> {
-                    // do nothing
+                    hideKeyboard(jumpNumbers);
+                }).setOnCancelListener(dialog -> {
+                    hideKeyboard(jumpNumbers);
                 }).create();
+        jumpNumbers.setOnEditorActionListener((v, actionId, event) -> {
+            if((event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) || actionId == EditorInfo.IME_ACTION_DONE) {
+                startJumpToNumber(jumpNumbers);
+                hideKeyboard(jumpNumbers);
+                cancelJumpDialogIfShowing();
+                return true;
+            }
+            return false;
+        });
         jumpDialog.show();
+        showKeyboard(jumpNumbers);
+    }
+
+    private void startJumpToNumber(EditText jumpNumbers) {
+        String _number = jumpNumbers.getText().toString();
+        if(!"".equals(_number)) {
+            int number = Integer.parseInt(_number);
+            openOrDownloadByNumber(number);
+        }
+    }
+
+    private void showKeyboard(View view) {
+        view.postDelayed(() -> {
+            view.setFocusableInTouchMode(true);
+            view.requestFocus();
+            ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(view, 0);
+        }, 300);
+    }
+
+    private void hideKeyboard(View view) {
+        ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(view.getWindowToken(), 0);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // always is needed here
     }
 
     private void openOrDownloadByNumber(int number) {
@@ -196,11 +233,15 @@ public class MainActivity
         results.removeChangeListener(realmChangeListener);
         realm.close();
         realm = null;
+        cancelJumpDialogIfShowing();
+        super.onDestroy();
+    }
+
+    private void cancelJumpDialogIfShowing() {
         if(jumpDialog != null && jumpDialog.isShowing()) {
             jumpDialog.cancel();
             jumpDialog = null;
         }
-        super.onDestroy();
     }
 
     @Override
