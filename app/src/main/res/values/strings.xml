@@ -3,4 +3,7 @@
     <string name="previous">Previous</string>
     <string name="next">Next</string>
     <string name="random_comic">Random Comic</string>
+    <string name="jump_to">Jump to…</string>
+    <string name="jump">Jump</string>
+    <string name="cancel">Cancel</string>
 </resources>

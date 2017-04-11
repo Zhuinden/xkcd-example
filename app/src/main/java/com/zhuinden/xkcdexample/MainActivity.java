@@ -3,8 +3,13 @@ package com.zhuinden.xkcdexample;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -104,6 +109,33 @@ public class MainActivity
         }
     };
 
+    AlertDialog jumpDialog;
+
+    private void openJumpDialog() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_jump, null, false);
+        final EditText jumpNumbers = ButterKnife.findById(dialogView, R.id.jump_numbers);
+        jumpDialog = new AlertDialog.Builder(this) //
+                .setTitle(R.string.jump_to)
+                .setView(dialogView) //
+                .setPositiveButton(R.string.jump, (dialog, which) -> {
+                    String _number = jumpNumbers.getText().toString();
+                    if(!"".equals(_number)) {
+                        int number = Integer.parseInt(_number);
+                        openOrDownloadByNumber(number);
+                    }
+                }).setNegativeButton(R.string.cancel, (dialog, which) -> {
+                    // do nothing
+                }).create();
+        jumpDialog.show();
+    }
+
+    private void openOrDownloadByNumber(int number) {
+        if(number > 0 && number <= max) {
+            current = number;
+            openOrDownloadCurrent();
+        }
+    }
+
     private boolean queryAndShowComicIfExists() {
         XkcdComic xkcdComic = getCurrentXkcdComic();
         if(xkcdComic != null) {
@@ -164,7 +196,26 @@ public class MainActivity
         results.removeChangeListener(realmChangeListener);
         realm.close();
         realm = null;
+        if(jumpDialog != null && jumpDialog.isShowing()) {
+            jumpDialog.cancel();
+            jumpDialog = null;
+        }
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_jump) {
+            openJumpDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private interface MethodSelector {
