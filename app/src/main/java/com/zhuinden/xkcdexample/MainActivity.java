@@ -44,24 +44,21 @@ public class MainActivity
     @OnClick(R.id.xkcd_previous)
     public void previous() {
         if(!isDownloading && current > 1) {
-            current--;
-            openOrDownloadCurrent();
+            modifyCurrentAndUpdateComic(current - 1);
         }
     }
 
     @OnClick(R.id.xkcd_next)
     public void next() {
         if(!isDownloading && current < max) {
-            current++;
-            openOrDownloadCurrent();
+            modifyCurrentAndUpdateComic(current + 1);
         }
     }
 
     @OnClick(R.id.xkcd_random)
     public void random() {
         if(!isDownloading) {
-            current = random.nextInt(max) + 1;
-            openOrDownloadCurrent();
+            modifyCurrentAndUpdateComic(random.nextInt(max) + 1);
         }
     }
 
@@ -165,9 +162,13 @@ public class MainActivity
 
     private void openOrDownloadByNumber(int number) {
         if(number > 0 && number <= max) {
-            current = number;
-            openOrDownloadCurrent();
+            modifyCurrentAndUpdateComic(number);
         }
+    }
+
+    private void modifyCurrentAndUpdateComic(int number) {
+        this.current = number;
+        openOrDownloadCurrent();
     }
 
     private boolean queryAndShowComicIfExists() {
