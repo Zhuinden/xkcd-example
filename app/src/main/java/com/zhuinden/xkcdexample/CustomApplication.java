@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.github.aurae.retrofit2.LoganSquareConverterFactory;
 
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -22,10 +23,12 @@ public class CustomApplication
     XkcdService xkcdService;
     Executor executor;
     XkcdMapper xkcdMapper;
+    Random random;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        random = new Random();
         xkcdMapper = new XkcdMapper();
         executor = Executors.newSingleThreadExecutor();
         Realm.init(this);
@@ -57,5 +60,9 @@ public class CustomApplication
 
     public XkcdMapper xkcdMapper() {
         return xkcdMapper;
+    }
+
+    public Random random() {
+        return random;
     }
 }

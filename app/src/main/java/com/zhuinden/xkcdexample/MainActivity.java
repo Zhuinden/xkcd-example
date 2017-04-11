@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.Executor;
 
 import butterknife.BindView;
@@ -41,6 +42,14 @@ public class MainActivity
     public void next() {
         if(!isDownloading && current < max) {
             current++;
+            openOrDownloadCurrent();
+        }
+    }
+
+    @OnClick(R.id.xkcd_random)
+    public void random() {
+        if(!isDownloading) {
+            current = random.nextInt(max) + 1;
             openOrDownloadCurrent();
         }
     }
@@ -105,6 +114,7 @@ public class MainActivity
     XkcdMapper xkcdMapper;
     XkcdService xkcdService;
     Executor executor;
+    Random random;
 
     volatile int current = 0;
 
@@ -150,6 +160,7 @@ public class MainActivity
         xkcdService = CustomApplication.get(this).xkcdService();
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
         executor = CustomApplication.get(this).executor();
+        random = CustomApplication.get(this).random();
 
         xkcdComic = getCurrentXkcdComic();
         if(xkcdComic != null) {
