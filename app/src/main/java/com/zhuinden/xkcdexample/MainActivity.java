@@ -32,7 +32,7 @@ public class MainActivity
 
     @OnClick(R.id.xkcd_previous)
     public void previous() {
-        if(!isDownloading && current != 0) {
+        if(!isDownloading && current > 1) {
             current--;
             openOrDownloadCurrent();
         }
