@@ -1,5 +1,7 @@
 package com.zhuinden.xkcdexample;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -31,7 +33,7 @@ public class MainActivity
     public void previous() {
         if(!isDownloading && current != 0) {
             current--;
-            downloadCurrent();
+            openOrDownloadCurrent();
         }
     }
 
@@ -39,7 +41,17 @@ public class MainActivity
     public void next() {
         if(!isDownloading && current < max) {
             current++;
+            openOrDownloadCurrent();
+        }
+    }
+
+    private void openOrDownloadCurrent() {
+        XkcdComic xkcdComic = getCurrentXkcdComic();
+        if(xkcdComic == null) {
             downloadCurrent();
+        } else {
+            this.xkcdComic = xkcdComic;
+            updateUi(xkcdComic);
         }
     }
 
@@ -75,8 +87,17 @@ public class MainActivity
     public boolean longClickImage() {
         if(xkcdComic != null) {
             Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
+            return true;
         }
-        return true;
+        return false;
+    }
+
+    @OnClick(R.id.xkcd_image)
+    public void clickImage() {
+        if(xkcdComic != null && xkcdComic.getLink() != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(xkcdComic.getLink()));
+            startActivity(intent);
+        }
     }
 
     volatile boolean isDownloading = false;
