@@ -203,8 +203,6 @@ public class MainActivity
         });
         jumpDialog.show();
         showKeyboard(jumpNumbers);
-
-        // testing git
     }
 
     private void startJumpToNumber(EditText jumpNumbers) {
