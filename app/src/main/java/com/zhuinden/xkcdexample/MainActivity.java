@@ -76,6 +76,17 @@ public class MainActivity
         }
     }
 
+    private void openOrDownloadByNumber(int number) {
+        if(number > 0 && number <= max) {
+            modifyCurrentAndUpdateComic(number);
+        }
+    }
+
+    private void modifyCurrentAndUpdateComic(int number) {
+        this.current = number;
+        openOrDownloadCurrent();
+    }
+
     private void openOrDownloadCurrent() {
         if(!queryAndShowComicIfExists()) {
             downloadCurrent();
@@ -86,18 +97,50 @@ public class MainActivity
         executor.execute(new DownloadTask((service -> service.getNumber(current).execute())));
     }
 
-    @OnLongClick(R.id.xkcd_image)
-    public boolean longClickImage() {
+    private boolean queryAndShowComicIfExists() {
+        XkcdComic xkcdComic = getCurrentXkcdComic();
         if(xkcdComic != null) {
-            Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
+            storeAndOpenComic(xkcdComic);
             return true;
         }
         return false;
     }
 
+    private XkcdComic getCurrentXkcdComic() {
+        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
+    }
+
+    private void storeAndOpenComic(XkcdComic xkcdComic) {
+        this.xkcdComic = xkcdComic;
+        updateUi(xkcdComic);
+    }
+
+    private void updateUi(XkcdComic xkcdComic) {
+        getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
+        Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
+    }
+
+    @OnLongClick(R.id.xkcd_image)
+    public boolean longClickImage() {
+        if(xkcdComic != null) {
+            showAltText(xkcdComic);
+            return true;
+        }
+        return false;
+    }
+
+    private void showAltText(XkcdComic xkcdComic) {
+        Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
+    }
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
-        if(xkcdComic != null && xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
+        if(xkcdComic != null) {
+            openLinkIfExists(xkcdComic);
+        }
+    }
+
+    private void openLinkIfExists(XkcdComic xkcdComic) {
+        if(xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
             openUriWithBrowser(Uri.parse(xkcdComic.getLink()));
         }
     }
@@ -105,7 +148,9 @@ public class MainActivity
     volatile boolean isDownloading = false;
 
     XkcdMapper xkcdMapper;
+
     XkcdService xkcdService;
+
     Executor executor;
     Random random;
 
@@ -116,6 +161,7 @@ public class MainActivity
     Realm realm;
 
     RealmResults<XkcdComic> results;
+
     XkcdComic xkcdComic;
 
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
@@ -161,6 +207,13 @@ public class MainActivity
         }
     }
 
+    private void cancelJumpDialogIfShowing() {
+        if(jumpDialog != null && jumpDialog.isShowing()) {
+            jumpDialog.cancel();
+            jumpDialog = null;
+        }
+    }
+
     private void showKeyboard(View view) {
         view.postDelayed(() -> {
             view.setFocusableInTouchMode(true);
@@ -172,40 +225,6 @@ public class MainActivity
     private void hideKeyboard(View view) {
         ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(view.getWindowToken(), 0);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // always is needed here
-    }
-
-    private void openOrDownloadByNumber(int number) {
-        if(number > 0 && number <= max) {
-            modifyCurrentAndUpdateComic(number);
-        }
-    }
-
-    private void modifyCurrentAndUpdateComic(int number) {
-        this.current = number;
-        openOrDownloadCurrent();
-    }
-
-    private boolean queryAndShowComicIfExists() {
-        XkcdComic xkcdComic = getCurrentXkcdComic();
-        if(xkcdComic != null) {
-            storeAndOpenComic(xkcdComic);
-            return true;
-        }
-        return false;
-    }
-
-    private void storeAndOpenComic(XkcdComic xkcdComic) {
-        this.xkcdComic = xkcdComic;
-        updateUi(xkcdComic);
-    }
-
-    private XkcdComic getCurrentXkcdComic() {
-        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
-    }
-
-    private void updateUi(XkcdComic xkcdComic) {
-        getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
-        Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
     }
 
     @Override
@@ -247,13 +266,6 @@ public class MainActivity
         realm = null;
         cancelJumpDialogIfShowing();
         super.onDestroy();
-    }
-
-    private void cancelJumpDialogIfShowing() {
-        if(jumpDialog != null && jumpDialog.isShowing()) {
-            jumpDialog.cancel();
-            jumpDialog = null;
-        }
     }
 
     @Override
