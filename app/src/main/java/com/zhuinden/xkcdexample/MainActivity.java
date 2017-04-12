@@ -132,6 +132,7 @@ public class MainActivity
     private void showAltText(XkcdComic xkcdComic) {
         Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
     }
+
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
         if(xkcdComic != null) {
