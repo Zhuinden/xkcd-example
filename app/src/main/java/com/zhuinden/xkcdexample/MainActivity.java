@@ -46,6 +46,7 @@ import butterknife.OnLongClick;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
+import retrofit2.Call;
 import retrofit2.Response;
 
 public class MainActivity
@@ -94,7 +95,11 @@ public class MainActivity
     }
 
     private void downloadCurrent() {
-        executor.execute(new DownloadTask((service -> service.getNumber(current).execute())));
+        download(service -> service.getNumber(current));
+    }
+
+    private void download(MethodSelector methodSelector) {
+        executor.execute(new DownloadTask(methodSelector));
     }
 
     private boolean queryAndShowComicIfExists() {
@@ -303,12 +308,13 @@ public class MainActivity
         startActivity(intent);
     }
 
+    @SuppressWarnings("Convert2MethodRef")
     private void downloadDefault() {
-        executor.execute(new DownloadTask((service -> service.getDefault().execute())));
+        download(service -> service.getDefault());
     }
 
     private interface MethodSelector {
-        Response<XkcdResponse> selectMethod(XkcdService xkcdService)
+        Call<XkcdResponse> selectMethod(XkcdService xkcdService)
                 throws IOException;
     }
 
@@ -325,7 +331,7 @@ public class MainActivity
         public void run() {
             try {
                 isDownloading = true;
-                Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService);
+                Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService).execute();
                 XkcdResponse xkcdResponse = _xkcdResponse.body();
                 XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
                 try(Realm r = Realm.getDefaultInstance()) {
