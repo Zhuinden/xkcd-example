@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +35,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.zhuinden.xkcdexample.redux.Action;
+import com.zhuinden.xkcdexample.redux.ReduxStore;
 import com.zhuinden.xkcdexample.util.Unit;
 
 import java.io.IOException;
@@ -45,6 +48,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -59,6 +63,7 @@ public class MainActivity
 
     @OnClick(R.id.xkcd_previous)
     public void previous() {
+        reduxStore.dispatch(Action.create(XkcdActions.PREVIOUS_COMIC));
         if(!isDownloading && current > 1) {
             modifyCurrentAndUpdateComic(current - 1);
         }
@@ -66,6 +71,7 @@ public class MainActivity
 
     @OnClick(R.id.xkcd_next)
     public void next() {
+        reduxStore.dispatch(Action.create(XkcdActions.NEXT_COMIC));
         if(!isDownloading && current < max) {
             modifyCurrentAndUpdateComic(current + 1);
         }
@@ -73,12 +79,14 @@ public class MainActivity
 
     @OnClick(R.id.xkcd_random)
     public void random() {
+        reduxStore.dispatch(Action.create(XkcdActions.RANDOM_COMIC));
         if(!isDownloading) {
             modifyCurrentAndUpdateComic(random.nextInt(max) + 1);
         }
     }
 
     private void openOrDownloadByNumber(int number) {
+        reduxStore.dispatch(Action.create(XkcdActions.JUMP_TO_NUMBER));
         if(number > 0 && number <= max) {
             modifyCurrentAndUpdateComic(number);
         }
@@ -103,6 +111,7 @@ public class MainActivity
     private void download(final MethodSelector methodSelector) {
         Single.fromCallable((Callable<Object>) () -> {
             try {
+                reduxStore.dispatch(Action.create(XkcdActions.START_DOWNLOAD));
                 isDownloading = true;
                 XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
                 XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
@@ -116,8 +125,10 @@ public class MainActivity
                     });
                 }
             } catch(IOException e) {
+                reduxStore.dispatch(Action.create(XkcdActions.NETWORK_ERROR));
                 runOnUiThread(MainActivity.this::handleNetworkError);
             } finally {
+                reduxStore.dispatch(Action.create(XkcdActions.FINISH_DOWNLOAD));
                 isDownloading = false;
             }
             return Unit.INSTANCE;
@@ -168,6 +179,7 @@ public class MainActivity
     }
 
     private void openLinkIfExists(XkcdComic xkcdComic) {
+        reduxStore.dispatch(Action.create(XkcdActions.OPEN_LINK));
         if(xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
             openUriWithBrowser(Uri.parse(xkcdComic.getLink()));
         }
@@ -178,6 +190,8 @@ public class MainActivity
     XkcdMapper xkcdMapper;
 
     XkcdService xkcdService;
+
+    ReduxStore reduxStore;
 
     Random random;
 
@@ -192,6 +206,7 @@ public class MainActivity
     XkcdComic xkcdComic;
 
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
+        reduxStore.dispatch(Action.create(XkcdActions.COMIC_CHANGED));
         if(!realm.isClosed()) {
             queryAndShowComicIfExists();
         }
@@ -254,13 +269,19 @@ public class MainActivity
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // always is needed here
     }
 
+    Disposable disposable;
+
     @Override
     @SuppressWarnings("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        reduxStore = CustomApplication.get(this).reduxStore();
         if(savedInstanceState != null) {
             current = savedInstanceState.getInt("current");
             max = savedInstanceState.getInt("max");
+            if(reduxStore.isAtInitialState()) {
+                reduxStore.setInitialState(savedInstanceState.getParcelable("state"));
+            }
         }
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -268,10 +289,13 @@ public class MainActivity
         results = realm.where(XkcdComic.class).findAll();
         results.addChangeListener(realmChangeListener);
 
+        this.disposable = reduxStore.state().subscribe(stateChange -> Log.i(TAG, "State change! [" + stateChange + "]"));
+
         xkcdService = CustomApplication.get(this).xkcdService();
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
         random = CustomApplication.get(this).random();
 
+        reduxStore.dispatch(Action.create(XkcdActions.INITIALIZE));
         queryAndShowComicIfExists();
         if(current == 0) {
             downloadDefault();
@@ -281,12 +305,15 @@ public class MainActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putParcelable("state", reduxStore.getState());
         outState.putInt("current", current);
         outState.putInt("max", max);
     }
 
     @Override
     protected void onDestroy() {
+        disposable.dispose();
+        disposable = null;
         results.removeChangeListener(realmChangeListener);
         realm.close();
         realm = null;
@@ -304,12 +331,15 @@ public class MainActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_latest:
+                reduxStore.dispatch(Action.create(XkcdActions.GO_TO_LATEST));
                 downloadDefault();
                 return true;
             case R.id.action_jump:
+                reduxStore.dispatch(Action.create(XkcdActions.OPEN_JUMP_DIALOG));
                 openJumpDialog();
                 return true;
             case R.id.action_retry:
+                reduxStore.dispatch(Action.create(XkcdActions.RETRY_DOWNLOAD));
                 if(current == 0) {
                     downloadDefault();
                 } else {
@@ -317,6 +347,7 @@ public class MainActivity
                 }
                 return true;
             case R.id.action_open_browser:
+                reduxStore.dispatch(Action.create(XkcdActions.OPEN_IN_BROWSER));
                 openUriWithBrowser(Uri.parse("https://xkcd.com/" + current));
                 return true;
         }
@@ -339,6 +370,7 @@ public class MainActivity
     }
 
     private void handleNetworkError() {
+        reduxStore.dispatch(Action.create(XkcdActions.NETWORK_ERROR));
         if(current != 0) { // not first start-up
             showNetworkError();
             return;

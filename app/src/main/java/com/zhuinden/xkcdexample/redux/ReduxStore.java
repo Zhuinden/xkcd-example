@@ -1,5 +1,6 @@
 package com.zhuinden.xkcdexample.redux;
 
+import com.jakewharton.rx.ReplayingShare;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.statebundle.StateBundle;
 
@@ -59,15 +60,16 @@ public class ReduxStore {
     }
 
     public Observable<StateChange> state() {
-        return state.map(currentState -> StateChange.create(previousState,
-                currentState)); // TODO: figure out how to make this work with Scan()
+        return state.map(currentState -> StateChange.create(previousState, currentState))
+                .compose(ReplayingShare.instance()); // TODO: figure out how to make this work with Scan()
     }
 
-    public Single<StateChange> dispatch(Action action) {
+    public void dispatch(Action action) {
         final State currentState = state.getValue();
         Single<State> _newState = reducer.reduce(state.getValue(), action);
-        return _newState.map(newState -> StateChange.create(currentState, newState))
+        _newState.map(newState -> StateChange.create(currentState, newState))
                 .doOnSuccess(stateChange -> previousState = stateChange.previousState())
-                .doOnSuccess(stateChange -> state.accept(stateChange.newState()));
+                .doOnSuccess(stateChange -> state.accept(stateChange.newState()))
+                .subscribe();
     }
 }

@@ -18,4 +18,6 @@ public class XkcdActions {
     public static final String FINISH_DOWNLOAD = "FINISH_DOWNLOAD";
     public static final String COMIC_CHANGED = "COMIC_CHANGED";
     public static final String NETWORK_ERROR = "NETWORK_ERROR";
+    public static final String INITIALIZE = "INITIALIZE";
+    public static final String OPEN_JUMP_DIALOG = "OPEN_JUMP_DIALOG";
 }
