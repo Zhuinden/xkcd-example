@@ -1,4 +1,4 @@
-package com.zhuinden.xkcdexample;
+package com.zhuinden.xkcdexample.redux;
 
 import java.util.Collections;
 import java.util.LinkedList;

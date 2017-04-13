@@ -4,7 +4,7 @@ package com.zhuinden.xkcdexample;
  * Created by Zhuinden on 2017.04.12..
  */
 
-public class Actions {
+public class XkcdActions {
     public static final String INITIALIZE = "INITIALIZE";
     public static final String NEXT_COMIC = "NEXT_COMIC";
     public static final String PREVIOUS_COMIC = "PREVIOUS_COMIC";

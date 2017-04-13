@@ -1,4 +1,4 @@
-package com.zhuinden.xkcdexample;
+package com.zhuinden.xkcdexample.redux;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.statebundle.StateBundle;
@@ -11,11 +11,35 @@ import io.reactivex.Single;
  */
 
 public class ReduxStore {
+    private ReduxStore(RootReducer rootReducer) {
+        this.reducer = rootReducer;
+    }
+
     private State previousState = State.create(new StateBundle(), Action.INIT);
+
+    private RootReducer reducer;
 
     BehaviorRelay<State> state = BehaviorRelay.createDefault(previousState);
 
-    RootReducer reducer = RootReducer.builder().addReducer(new XkcdReducer()).build();
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Builder() {
+        }
+
+        private RootReducer.Builder rootReducerBuilder = RootReducer.builder();
+
+        public Builder addReducer(Reducer reducer) {
+            rootReducerBuilder.addReducer(reducer);
+            return this;
+        }
+
+        public ReduxStore build() {
+            return new ReduxStore(rootReducerBuilder.build());
+        }
+    }
 
     public Observable<StateChange> state() {
         return state.map(currentState -> StateChange.create(previousState, currentState));

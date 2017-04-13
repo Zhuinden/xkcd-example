@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import com.github.aurae.retrofit2.LoganSquareConverterFactory;
+import com.zhuinden.xkcdexample.redux.ReduxStore;
 
 import java.util.Random;
 import java.util.concurrent.Executor;
@@ -42,7 +43,7 @@ public class CustomApplication
                 .addConverterFactory(LoganSquareConverterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
-        reduxStore = new ReduxStore();
+        reduxStore = ReduxStore.builder().addReducer(new XkcdReducer()).build();
     }
 
     public static CustomApplication get(Context context) {

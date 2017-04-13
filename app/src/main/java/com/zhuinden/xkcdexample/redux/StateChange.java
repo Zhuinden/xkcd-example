@@ -1,4 +1,4 @@
-package com.zhuinden.xkcdexample;
+package com.zhuinden.xkcdexample.redux;
 
 import android.os.Parcelable;
 

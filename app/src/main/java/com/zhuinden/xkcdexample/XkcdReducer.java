@@ -1,20 +1,24 @@
 package com.zhuinden.xkcdexample;
 
+import com.zhuinden.xkcdexample.redux.Action;
+import com.zhuinden.xkcdexample.redux.Reducer;
+import com.zhuinden.xkcdexample.redux.State;
+
 import io.reactivex.Single;
 
-import static com.zhuinden.xkcdexample.Actions.COMIC_CHANGED;
-import static com.zhuinden.xkcdexample.Actions.FINISH_DOWNLOAD;
-import static com.zhuinden.xkcdexample.Actions.GO_TO_LATEST;
-import static com.zhuinden.xkcdexample.Actions.INITIALIZE;
-import static com.zhuinden.xkcdexample.Actions.JUMP_TO_NUMBER;
-import static com.zhuinden.xkcdexample.Actions.NEXT_COMIC;
-import static com.zhuinden.xkcdexample.Actions.OPEN_IN_BROWSER;
-import static com.zhuinden.xkcdexample.Actions.OPEN_LINK;
-import static com.zhuinden.xkcdexample.Actions.PREVIOUS_COMIC;
-import static com.zhuinden.xkcdexample.Actions.RANDOM_COMIC;
-import static com.zhuinden.xkcdexample.Actions.RETRY_DOWNLOAD;
-import static com.zhuinden.xkcdexample.Actions.SHOW_ALT_TEXT;
-import static com.zhuinden.xkcdexample.Actions.START_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdActions.COMIC_CHANGED;
+import static com.zhuinden.xkcdexample.XkcdActions.FINISH_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdActions.GO_TO_LATEST;
+import static com.zhuinden.xkcdexample.XkcdActions.INITIALIZE;
+import static com.zhuinden.xkcdexample.XkcdActions.JUMP_TO_NUMBER;
+import static com.zhuinden.xkcdexample.XkcdActions.NEXT_COMIC;
+import static com.zhuinden.xkcdexample.XkcdActions.OPEN_IN_BROWSER;
+import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
+import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
+import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
+import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
+import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
 
 /**
  * Created by Zhuinden on 2017.04.12..
