@@ -1,6 +1,6 @@
 package com.zhuinden.xkcdexample;
 
-import retrofit2.Call;
+import io.reactivex.Single;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 
@@ -10,8 +10,8 @@ import retrofit2.http.Path;
 
 public interface XkcdService {
     @GET("{number}/info.0.json")
-    Call<XkcdResponse> getNumber(@Path("number") int number);
+    Single<XkcdResponse> getNumber(@Path("number") int number);
 
     @GET("info.0.json")
-    Call<XkcdResponse> getDefault();
+    Single<XkcdResponse> getDefault();
 }

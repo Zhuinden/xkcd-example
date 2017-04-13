@@ -43,11 +43,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
+import io.reactivex.Single;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class MainActivity
         extends AppCompatActivity {
@@ -314,7 +313,7 @@ public class MainActivity
     }
 
     private interface MethodSelector {
-        Call<XkcdResponse> selectMethod(XkcdService xkcdService)
+        Single<XkcdResponse> selectMethod(XkcdService xkcdService)
                 throws IOException;
     }
 
@@ -331,8 +330,7 @@ public class MainActivity
         public void run() {
             try {
                 isDownloading = true;
-                Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService).execute();
-                XkcdResponse xkcdResponse = _xkcdResponse.body();
+                XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
                 XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
                 try(Realm r = Realm.getDefaultInstance()) {
                     r.executeTransaction(realm -> {

@@ -1,5 +1,6 @@
 package com.zhuinden.xkcdexample;
 
+import com.zhuinden.statebundle.StateBundle;
 import com.zhuinden.xkcdexample.redux.Action;
 import com.zhuinden.xkcdexample.redux.Reducer;
 import com.zhuinden.xkcdexample.redux.State;
@@ -28,8 +29,10 @@ public class XkcdReducer
         implements Reducer {
     @Override
     public Single<State> reduce(State state, Action action) {
+        StateBundle stateBundle;
         switch(action.type()) {
             case INITIALIZE:
+                stateBundle = new StateBundle(state.state());
                 break;
             case START_DOWNLOAD:
                 break;

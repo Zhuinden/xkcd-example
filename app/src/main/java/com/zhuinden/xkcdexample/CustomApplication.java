@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 /**
  * Created by Zhuinden on 2017.04.11..
@@ -40,7 +41,7 @@ public class CustomApplication
                 .build();
         Realm.setDefaultConfiguration(realmConfiguration);
         retrofit = new Retrofit.Builder().baseUrl("http://xkcd.com/")
-                .addConverterFactory(LoganSquareConverterFactory.create())
+                .addConverterFactory(LoganSquareConverterFactory.create()).addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
         reduxStore = ReduxStore.builder().addReducer(new XkcdReducer()).build();
