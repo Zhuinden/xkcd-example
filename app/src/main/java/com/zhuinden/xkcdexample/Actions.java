@@ -15,5 +15,7 @@ public class Actions {
     public static final String JUMP_TO_NUMBER = "JUMP_TO_NUMBER";
     public static final String OPEN_LINK = "OPEN_LINK";
     public static final String SHOW_ALT_TEXT = "SHOW_ALT_TEXT";
-
+    public static final String START_DOWNLOAD = "START_DOWNLOAD";
+    public static final String FINISH_DOWNLOAD = "FINISH_DOWNLOAD";
+    public static final String COMIC_CHANGED = "COMIC_CHANGED";
 }

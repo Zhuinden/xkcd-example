@@ -25,6 +25,8 @@ public class CustomApplication
     XkcdMapper xkcdMapper;
     Random random;
 
+    ReduxStore reduxStore;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -40,6 +42,7 @@ public class CustomApplication
                 .addConverterFactory(LoganSquareConverterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
+        reduxStore = new ReduxStore();
     }
 
     public static CustomApplication get(Context context) {
@@ -64,5 +67,9 @@ public class CustomApplication
 
     public Random random() {
         return random;
+    }
+
+    public ReduxStore reduxStore() {
+        return reduxStore;
     }
 }

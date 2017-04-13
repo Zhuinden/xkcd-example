@@ -44,5 +44,9 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 
     compile 'com.github.Zhuinden:state-bundle:1.1.0'
-    annotationProcessor 'frankiesardo:auto-parcel:1.0.3'
+    compile 'nz.bradcampbell:paperparcel:2.0.1'
+    annotationProcessor 'nz.bradcampbell:paperparcel-compiler:2.0.1'
+    compile "io.reactivex.rxjava2:rxjava:2.0.8"
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
 }

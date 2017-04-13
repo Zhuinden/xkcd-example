@@ -1,13 +1,11 @@
 package com.zhuinden.xkcdexample;
 
+import io.reactivex.Single;
+
 /**
- * Created by Zhuinden on 2017.04.12..
+ * Created by Owner on 2017. 04. 13..
  */
 
-public class Reducer {
-    public State reduce(State currentState, Action newAction) {
-        switch(newAction.type()) {
-            case //TODO
-        }
-    }
+public interface Reducer {
+    Single<State> reduce(final State state, final Action action);
 }
