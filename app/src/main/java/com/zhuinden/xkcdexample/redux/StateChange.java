@@ -11,11 +11,11 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class StateChange
         implements Parcelable {
-    public abstract State previousState();
-
     public abstract State newState();
 
+    public abstract State previousState();
+
     public static StateChange create(State previousState, State newState) {
-        return new AutoValue_StateChange(previousState, newState);
+        return new AutoValue_StateChange(newState, previousState);
     }
 }
