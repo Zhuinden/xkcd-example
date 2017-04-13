@@ -10,8 +10,8 @@ import io.reactivex.Single;
 import static com.zhuinden.xkcdexample.XkcdActions.COMIC_CHANGED;
 import static com.zhuinden.xkcdexample.XkcdActions.FINISH_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.GO_TO_LATEST;
-import static com.zhuinden.xkcdexample.XkcdActions.INITIALIZE;
 import static com.zhuinden.xkcdexample.XkcdActions.JUMP_TO_NUMBER;
+import static com.zhuinden.xkcdexample.XkcdActions.NETWORK_ERROR;
 import static com.zhuinden.xkcdexample.XkcdActions.NEXT_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_IN_BROWSER;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
@@ -20,6 +20,7 @@ import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdState.putDownloading;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -31,33 +32,58 @@ public class XkcdReducer
     public Single<State> reduce(State state, Action action) {
         StateBundle stateBundle;
         switch(action.type()) {
-            case INITIALIZE:
-                stateBundle = new StateBundle(state.state());
-                break;
             case START_DOWNLOAD:
-                break;
+                stateBundle = new StateBundle(state.state());
+                putDownloading(stateBundle, true);
+                return Single.just(State.create(stateBundle, action));
             case FINISH_DOWNLOAD:
-                break;
+                stateBundle = new StateBundle(state.state());
+                putDownloading(stateBundle, false);
+                return Single.just(State.create(stateBundle, action));
             case COMIC_CHANGED:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out.
+                return Single.just(State.create(stateBundle, action));
             case NEXT_COMIC:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out: download with retrofit
+                return Single.just(State.create(stateBundle, action));
             case PREVIOUS_COMIC:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out: download with retrofit
+                return Single.just(State.create(stateBundle, action));
             case RANDOM_COMIC:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out: download with retrofit
+                return Single.just(State.create(stateBundle, action));
             case GO_TO_LATEST:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out: download with retrofit
+                return Single.just(State.create(stateBundle, action));
             case RETRY_DOWNLOAD:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out: download with retrofit
+                return Single.just(State.create(stateBundle, action));
             case OPEN_IN_BROWSER:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out
+                return Single.just(State.create(stateBundle, action));
             case JUMP_TO_NUMBER:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out
+                return Single.just(State.create(stateBundle, action));
             case OPEN_LINK:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out
+                return Single.just(State.create(stateBundle, action));
             case SHOW_ALT_TEXT:
-                break;
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out
+                return Single.just(State.create(stateBundle, action));
+            case NETWORK_ERROR:
+                stateBundle = new StateBundle(state.state());
+                // TODO: figure this out
+                return Single.just(State.create(stateBundle, action));
         }
         return Single.just(state);
     }

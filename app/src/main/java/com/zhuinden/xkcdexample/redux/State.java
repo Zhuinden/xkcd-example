@@ -13,7 +13,7 @@ public abstract class State
         implements Parcelable {
     public abstract StateBundle state();
 
-    public abstract Action previousAction();
+    public abstract Action action();
 
     public static State create(StateBundle state, Action previousAction) {
         return new AutoValue_State(state, previousAction);

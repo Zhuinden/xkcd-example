@@ -22,4 +22,12 @@ public class XkcdState {
     public static void putCurrent(StateBundle stateBundle, int current) {
         stateBundle.putInt("current", current);
     }
+
+    public static boolean isDownloading(StateBundle stateBundle) {
+        return stateBundle.getBoolean("isDownloading", false);
+    }
+
+    public static void putDownloading(StateBundle stateBundle, boolean isDownloading) {
+        stateBundle.putBoolean("isDownloading", isDownloading);
+    }
 }

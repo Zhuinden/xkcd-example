@@ -5,7 +5,6 @@ package com.zhuinden.xkcdexample;
  */
 
 public class XkcdActions {
-    public static final String INITIALIZE = "INITIALIZE";
     public static final String NEXT_COMIC = "NEXT_COMIC";
     public static final String PREVIOUS_COMIC = "PREVIOUS_COMIC";
     public static final String RANDOM_COMIC = "RANDOM_COMIC";
@@ -18,4 +17,5 @@ public class XkcdActions {
     public static final String START_DOWNLOAD = "START_DOWNLOAD";
     public static final String FINISH_DOWNLOAD = "FINISH_DOWNLOAD";
     public static final String COMIC_CHANGED = "COMIC_CHANGED";
+    public static final String NETWORK_ERROR = "NETWORK_ERROR";
 }
