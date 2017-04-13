@@ -15,11 +15,11 @@ public class ReduxStore {
         this.reducer = rootReducer;
     }
 
-    private State previousState = State.create(new StateBundle(), Action.INIT);
+    private final State initialState = State.create(new StateBundle(), Action.INIT);
 
     private RootReducer reducer;
 
-    BehaviorRelay<State> state = BehaviorRelay.createDefault(previousState);
+    BehaviorRelay<State> state = BehaviorRelay.createDefault(initialState);
 
     public static Builder builder() {
         return new Builder();
@@ -42,14 +42,14 @@ public class ReduxStore {
     }
 
     public Observable<StateChange> state() {
-        return state.map(currentState -> StateChange.create(previousState, currentState));
+        return state.scan(StateChange.create(initialState, initialState),
+                (stateChange, newState) -> StateChange.create(stateChange.newState(), newState));
     }
 
     public Single<StateChange> dispatch(Action action) {
         final State currentState = state.getValue();
         Single<State> _newState = reducer.reduce(state.getValue(), action);
         return _newState.map(newState -> StateChange.create(currentState, newState))
-                .doOnSuccess(stateChange -> previousState = stateChange.previousState())
                 .doOnSuccess(stateChange -> state.accept(stateChange.newState()));
     }
 }
