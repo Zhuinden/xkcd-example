@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -161,6 +162,7 @@ public class MainActivity
     @OnLongClick(R.id.xkcd_image)
     public boolean longClickImage() {
         if(xkcdComic != null) {
+            reduxStore.dispatch(Action.create(XkcdActions.SHOW_ALT_TEXT));
             showAltText(xkcdComic);
             return true;
         }
@@ -174,6 +176,7 @@ public class MainActivity
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
         if(xkcdComic != null) {
+            reduxStore.dispatch(Action.create(XkcdActions.OPEN_LINK));
             openLinkIfExists(xkcdComic);
         }
     }
@@ -215,6 +218,7 @@ public class MainActivity
     AlertDialog jumpDialog;
 
     private void openJumpDialog() {
+        reduxStore.dispatch(Action.create(XkcdActions.OPEN_JUMP_DIALOG));
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_jump, null, false);
         final EditText jumpNumbers = ButterKnife.findById(dialogView, R.id.jump_numbers);
         jumpDialog = new AlertDialog.Builder(this) //
@@ -265,7 +269,8 @@ public class MainActivity
     }
 
     private void hideKeyboard(View view) {
-        ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(view.getWindowToken(), 0);
+        ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(view.getWindowToken(),
+                0);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // always is needed here
     }
 
@@ -274,7 +279,6 @@ public class MainActivity
     @Override
     @SuppressWarnings("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         reduxStore = CustomApplication.get(this).reduxStore();
         if(savedInstanceState != null) {
             current = savedInstanceState.getInt("current");
@@ -283,13 +287,22 @@ public class MainActivity
                 reduxStore.setInitialState(savedInstanceState.getParcelable("state"));
             }
         }
+        super.onCreate(savedInstanceState);
+        MainScopeListener mainScopeListener = (MainScopeListener) getSupportFragmentManager().findFragmentByTag(
+                "SCOPE_LISTENER");
+        if(mainScopeListener == null) {
+            mainScopeListener = new MainScopeListener();
+            getSupportFragmentManager().beginTransaction().add(mainScopeListener, "SCOPE_LISTENER").commitNow();
+        }
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         realm = Realm.getDefaultInstance();
         results = realm.where(XkcdComic.class).findAll();
         results.addChangeListener(realmChangeListener);
 
-        this.disposable = reduxStore.state().subscribe(stateChange -> Log.i(TAG, "State change! [" + stateChange + "]"));
+        this.disposable = reduxStore.state().subscribe(stateChange -> {
+            Log.i(TAG, "[" + stateChange + "]");
+        });
 
         xkcdService = CustomApplication.get(this).xkcdService();
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
@@ -364,6 +377,11 @@ public class MainActivity
         download(service -> service.getDefault());
     }
 
+    public static ReduxStore getStore(Context context) {
+        // noinspection ResourceType
+        return (ReduxStore) context.getSystemService("REDUX_STORE");
+    }
+
     private interface MethodSelector {
         Single<XkcdResponse> selectMethod(XkcdService xkcdService)
                 throws IOException;
@@ -387,5 +405,13 @@ public class MainActivity
 
     private void showNetworkError() {
         Toast.makeText(MainActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public Object getSystemService(@NonNull String name) {
+        if("REDUX_STORE".equals(name)) {
+            return reduxStore;
+        }
+        return super.getSystemService(name);
     }
 }
