@@ -34,16 +34,18 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.zhuinden.xkcdexample.util.Unit;
 
 import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Callable;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -97,8 +99,29 @@ public class MainActivity
         download(service -> service.getNumber(current));
     }
 
-    private void download(MethodSelector methodSelector) {
-        executor.execute(new DownloadTask(methodSelector));
+    @SuppressWarnings("NewApi")
+    private void download(final MethodSelector methodSelector) {
+        Single.fromCallable((Callable<Object>) () -> {
+            try {
+                isDownloading = true;
+                XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
+                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
+                try(Realm r = Realm.getDefaultInstance()) {
+                    r.executeTransaction(realm -> {
+                        realm.insertOrUpdate(xkcdComic);
+                        if(current == 0 || xkcdComic.getNum() > max) {
+                            max = xkcdComic.getNum();
+                        }
+                        current = xkcdComic.getNum();
+                    });
+                }
+            } catch(IOException e) {
+                runOnUiThread(MainActivity.this::handleNetworkError);
+            } finally {
+                isDownloading = false;
+            }
+            return Unit.INSTANCE;
+        }).subscribeOn(Schedulers.io()).subscribe();
     }
 
     private boolean queryAndShowComicIfExists() {
@@ -156,7 +179,6 @@ public class MainActivity
 
     XkcdService xkcdService;
 
-    Executor executor;
     Random random;
 
     volatile int current = 0;
@@ -248,7 +270,6 @@ public class MainActivity
 
         xkcdService = CustomApplication.get(this).xkcdService();
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
-        executor = CustomApplication.get(this).executor();
         random = CustomApplication.get(this).random();
 
         queryAndShowComicIfExists();
@@ -315,38 +336,6 @@ public class MainActivity
     private interface MethodSelector {
         Single<XkcdResponse> selectMethod(XkcdService xkcdService)
                 throws IOException;
-    }
-
-    private class DownloadTask
-            implements Runnable {
-        MethodSelector methodSelector;
-
-        public DownloadTask(MethodSelector methodSelector) {
-            this.methodSelector = methodSelector;
-        }
-
-        @Override
-        @SuppressWarnings("NewApi")
-        public void run() {
-            try {
-                isDownloading = true;
-                XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
-                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                try(Realm r = Realm.getDefaultInstance()) {
-                    r.executeTransaction(realm -> {
-                        realm.insertOrUpdate(xkcdComic);
-                        if(current == 0 || xkcdComic.getNum() > max) {
-                            max = xkcdComic.getNum();
-                        }
-                        current = xkcdComic.getNum();
-                    });
-                }
-            } catch(IOException e) {
-                runOnUiThread(MainActivity.this::handleNetworkError);
-            } finally {
-                isDownloading = false;
-            }
-        }
     }
 
     private void handleNetworkError() {
