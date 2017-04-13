@@ -1,5 +1,7 @@
 package com.zhuinden.xkcdexample;
 
+import android.os.Parcelable;
+
 import com.google.auto.value.AutoValue;
 import com.zhuinden.statebundle.StateBundle;
 
@@ -7,7 +9,7 @@ import com.zhuinden.statebundle.StateBundle;
  * Created by Zhuinden on 2017.04.12..
  */
 @AutoValue
-public abstract class Action {
+public abstract class Action implements Parcelable {
     public abstract String type();
 
     public abstract StateBundle payload();
