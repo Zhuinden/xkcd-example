@@ -54,4 +54,12 @@ public class XkcdState {
     public static void putNumber(StateBundle stateBundle, int number) {
         stateBundle.putInt("number", number);
     }
+
+    public static int initMax(StateBundle stateBundle) {
+        return stateBundle.getInt("initMax", 0);
+    }
+
+    public static void putInitMax(StateBundle stateBundle, int max) {
+        stateBundle.putInt("initMax", max);
+    }
 }

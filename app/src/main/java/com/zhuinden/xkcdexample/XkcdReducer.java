@@ -34,6 +34,7 @@ import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdState.current;
+import static com.zhuinden.xkcdexample.XkcdState.initMax;
 import static com.zhuinden.xkcdexample.XkcdState.isDownloading;
 import static com.zhuinden.xkcdexample.XkcdState.max;
 import static com.zhuinden.xkcdexample.XkcdState.number;
@@ -141,12 +142,10 @@ public class XkcdReducer
                             putCurrent(stateBundle, _number);
                             putMax(stateBundle, _number);
                         } else {
-                            try(Realm realm = Realm.getDefaultInstance()) { // i should make this be moved out
-                                Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-                                if(maxNum != null && max <= 0) {
-                                    putMax(stateBundle, maxNum.intValue());
-                                    putCurrent(stateBundle, maxNum.intValue());
-                                }
+                            int maxNum = initMax(action.payload());
+                            if(maxNum != -1) {
+                                putCurrent(stateBundle, maxNum);
+                                putMax(stateBundle, maxNum);
                             }
                         }
                         return Single.just(State.create(stateBundle, action));

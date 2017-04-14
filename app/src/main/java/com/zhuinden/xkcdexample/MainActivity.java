@@ -72,6 +72,7 @@ import static com.zhuinden.xkcdexample.XkcdState.altText;
 import static com.zhuinden.xkcdexample.XkcdState.current;
 import static com.zhuinden.xkcdexample.XkcdState.link;
 import static com.zhuinden.xkcdexample.XkcdState.putAltText;
+import static com.zhuinden.xkcdexample.XkcdState.putInitMax;
 import static com.zhuinden.xkcdexample.XkcdState.putLink;
 import static com.zhuinden.xkcdexample.XkcdState.putNumber;
 
@@ -296,7 +297,12 @@ public class MainActivity
         xkcdMapper = CustomApplication.get(this).xkcdMapper();
         random = CustomApplication.get(this).random();
 
-        reduxStore.dispatch(Action.create(INITIALIZE));
+
+        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
+        StateBundle initParams = new StateBundle();
+        putInitMax(initParams, maxNum != null ? maxNum.intValue() : -1);
+
+        reduxStore.dispatch(Action.create(INITIALIZE, initParams));
     }
 
     @Override
