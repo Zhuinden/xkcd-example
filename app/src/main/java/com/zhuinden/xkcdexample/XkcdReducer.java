@@ -239,6 +239,7 @@ public class XkcdReducer
                 emitter.onNext(state);
             }
             emitter.onNext(State.create(state.state(), action));
+            emitter.onComplete();
         }).subscribeOn(Schedulers.io());
     }
 }
