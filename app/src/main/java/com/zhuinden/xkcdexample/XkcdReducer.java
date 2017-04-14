@@ -200,42 +200,41 @@ public class XkcdReducer
     private Observable<State> download(final State initialState, final MethodSelector methodSelector) {
         return Observable.create((ObservableOnSubscribe<State>) emitter -> {
             CopyOnWriteStateBundle stateBundle = initialState.state();
-            State state = initialState;
-            try {
-                state = reduce(initialState,
-                        Action.create(XkcdActions.START_DOWNLOAD)).blockingFirst(); // TODO: somehow turn these into flatMap()?
+            reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD)).flatMap((state) -> {
                 emitter.onNext(state);
-
-                XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
-                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                try(Realm realm = Realm.getDefaultInstance()) {
-                    try {
-                        realm.beginTransaction();
-                        realm.insertOrUpdate(xkcdComic);
-                        stateBundle = putNumber(stateBundle, xkcdComic.getNum());
-                        realm.commitTransaction();
-                    } catch(Exception e) {
-                        if(realm.isInTransaction()) {
-                            realm.cancelTransaction();
+                try {
+                    XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
+                    XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
+                    CopyOnWriteStateBundle _stateBundle = stateBundle;
+                    try(Realm realm = Realm.getDefaultInstance()) {
+                        try {
+                            realm.beginTransaction();
+                            realm.insertOrUpdate(xkcdComic);
+                            _stateBundle = putNumber(stateBundle, xkcdComic.getNum());
+                            realm.commitTransaction();
+                        } catch(Exception e) {
+                            if(realm.isInTransaction()) {
+                                realm.cancelTransaction();
+                            }
                         }
                     }
+                    return reduce(state, Action.create(COMIC_SAVED, _stateBundle));
+                } catch(Exception e) {
+                    CopyOnWriteStateBundle param = new CopyOnWriteStateBundle();
+                    try(Realm realm = Realm.getDefaultInstance()) {
+                        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
+                        param = putInitMax(param, maxNum == null ? -1 : maxNum.intValue());
+                    }
+                    return reduce(state, Action.create(NETWORK_ERROR, param));
                 }
-                state = reduce(state, Action.create(COMIC_SAVED, stateBundle)).blockingFirst();
+            }).flatMap((state) -> {
                 emitter.onNext(state);
-            } catch(Exception e) {
-                CopyOnWriteStateBundle param = new CopyOnWriteStateBundle();
-                try(Realm realm = Realm.getDefaultInstance()) {
-                    Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-                    param = putInitMax(param, maxNum == null ? -1 : maxNum.intValue());
-                }
-                state = reduce(state, Action.create(NETWORK_ERROR, param)).blockingFirst();
+                return reduce(state, Action.create(XkcdActions.FINISH_DOWNLOAD));
+            }).subscribe(state -> {
                 emitter.onNext(state);
-            } finally {
-                state = reduce(state, Action.create(XkcdActions.FINISH_DOWNLOAD)).blockingFirst();
-                emitter.onNext(state);
-            }
-            emitter.onNext(State.create(state.state(), state.action()));
-            emitter.onComplete();
+                emitter.onNext(State.create(state.state(), state.action()));
+                emitter.onComplete();
+            });
         }).subscribeOn(Schedulers.io());
     }
 }
