@@ -1,7 +1,7 @@
 package com.zhuinden.xkcdexample.redux;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
-import com.zhuinden.statebundle.StateBundle;
+import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
 import io.reactivex.Observable;
 
@@ -14,7 +14,7 @@ public class ReduxStore {
         this.reducer = rootReducer;
     }
 
-    private final State initialState = State.create(new StateBundle(), Action.INIT);
+    private final State initialState = State.create(new CopyOnWriteStateBundle(), Action.INIT);
 
     private RootReducer reducer;
 

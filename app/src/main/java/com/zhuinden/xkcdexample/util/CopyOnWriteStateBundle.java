@@ -21,7 +21,7 @@ public class CopyOnWriteStateBundle
     }
 
     public CopyOnWriteStateBundle(StateBundle stateBundle) {
-        super(stateBundle);
+        super.putAll(stateBundle);
     }
 
     /**
@@ -31,7 +31,7 @@ public class CopyOnWriteStateBundle
      * @return the bundle copied and wrapped as a CopyOnWriteStateBundle
      */
     public StateBundle putAll(StateBundle bundle) {
-        return new CopyOnWriteStateBundle(new StateBundle(bundle));
+        return new CopyOnWriteStateBundle(bundle);
     }
 
     /**
@@ -51,6 +51,13 @@ public class CopyOnWriteStateBundle
      */
     public Set<String> keySet() {
         return Collections.unmodifiableSet(super.keySet());
+    }
+
+    @Override
+    public StateBundle remove(String key) {
+        StateBundle stateBundle = new StateBundle(this);
+        stateBundle.remove(key);
+        return new CopyOnWriteStateBundle(stateBundle);
     }
 
     /**
@@ -495,10 +502,19 @@ public class CopyOnWriteStateBundle
         return new Builder();
     }
 
+    public static Builder builder(StateBundle stateBundle) {
+        return new Builder(stateBundle);
+    }
+
     public static class Builder {
-        StateBundle stateBundle = new StateBundle();
+        StateBundle stateBundle;
 
         private Builder() {
+            stateBundle = new StateBundle();
+        }
+
+        private Builder(StateBundle stateBundle) {
+            stateBundle = new StateBundle(stateBundle);
         }
 
         /**
@@ -541,7 +557,6 @@ public class CopyOnWriteStateBundle
          */
         public Builder remove(String key) {
             stateBundle.remove(key);
-
             return this;
         }
 
@@ -977,6 +992,10 @@ public class CopyOnWriteStateBundle
         public Builder putBundle(@Nullable String key, @Nullable StateBundle value) {
             stateBundle.putBundle(key, value);
             return this;
+        }
+
+        public CopyOnWriteStateBundle build() {
+            return new CopyOnWriteStateBundle(stateBundle);
         }
     }
 }

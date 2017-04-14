@@ -36,10 +36,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.zhuinden.statebundle.StateBundle;
 import com.zhuinden.xkcdexample.redux.Action;
 import com.zhuinden.xkcdexample.redux.ReduxStore;
 import com.zhuinden.xkcdexample.redux.State;
+import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -97,9 +97,7 @@ public class MainActivity
     }
 
     private void openOrDownloadByNumber(int number) {
-        StateBundle stateBundle = new StateBundle();
-        putNumber(stateBundle, number);
-        reduxStore.dispatch(Action.create(JUMP_TO_NUMBER, stateBundle));
+        reduxStore.dispatch(Action.create(JUMP_TO_NUMBER, putNumber(new CopyOnWriteStateBundle(), number)));
     }
 
     private boolean queryAndShowComicIfExists(int number) {
@@ -128,9 +126,8 @@ public class MainActivity
     @OnLongClick(R.id.xkcd_image)
     public boolean longClickImage() {
         if(xkcdComic != null) {
-            StateBundle stateBundle = new StateBundle();
-            putAltText(stateBundle, xkcdComic.getAlt());
-            reduxStore.dispatch(Action.create(SHOW_ALT_TEXT, stateBundle));
+            reduxStore.dispatch(Action.create(SHOW_ALT_TEXT,
+                    putAltText(new CopyOnWriteStateBundle(), xkcdComic.getAlt())));
             return true;
         }
         return false;
@@ -143,9 +140,7 @@ public class MainActivity
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
         if(xkcdComic != null) {
-            StateBundle stateBundle = new StateBundle();
-            putLink(stateBundle, xkcdComic.getLink());
-            reduxStore.dispatch(Action.create(OPEN_LINK, stateBundle));
+            reduxStore.dispatch(Action.create(OPEN_LINK, putLink(new CopyOnWriteStateBundle(), xkcdComic.getLink())));
         }
     }
 
@@ -287,10 +282,8 @@ public class MainActivity
 
 
         Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-        StateBundle initParams = new StateBundle();
-        putInitMax(initParams, maxNum != null ? maxNum.intValue() : -1);
-
-        reduxStore.dispatch(Action.create(INITIALIZE, initParams));
+        reduxStore.dispatch(Action.create(INITIALIZE,
+                putInitMax(new CopyOnWriteStateBundle(), maxNum != null ? maxNum.intValue() : -1)));
     }
 
     @Override

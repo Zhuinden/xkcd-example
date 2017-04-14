@@ -4,7 +4,7 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 import com.google.auto.value.AutoValue;
-import com.zhuinden.statebundle.StateBundle;
+import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -15,13 +15,13 @@ public abstract class Action implements Parcelable {
 
     public abstract String type();
 
-    public abstract StateBundle payload();
+    public abstract CopyOnWriteStateBundle payload();
 
     public static Action create(@NonNull String type) {
-        return create(type, new StateBundle());
+        return create(type, new CopyOnWriteStateBundle());
     }
 
-    public static Action create(@NonNull String type, @NonNull StateBundle payload) {
+    public static Action create(@NonNull String type, @NonNull CopyOnWriteStateBundle payload) {
         if(type == null) {
             throw new NullPointerException("type");
         }

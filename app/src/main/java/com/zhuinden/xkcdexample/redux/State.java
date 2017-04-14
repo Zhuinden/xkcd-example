@@ -3,7 +3,7 @@ package com.zhuinden.xkcdexample.redux;
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
-import com.zhuinden.statebundle.StateBundle;
+import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -11,11 +11,11 @@ import com.zhuinden.statebundle.StateBundle;
 @AutoValue
 public abstract class State
         implements Parcelable {
-    public abstract StateBundle state();
+    public abstract CopyOnWriteStateBundle state();
 
     public abstract Action action();
 
-    public static State create(StateBundle state, Action previousAction) {
+    public static State create(CopyOnWriteStateBundle state, Action previousAction) {
         return new AutoValue_State(state, previousAction);
     }
 }
