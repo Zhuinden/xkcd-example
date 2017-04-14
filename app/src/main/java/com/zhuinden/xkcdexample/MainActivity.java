@@ -41,8 +41,6 @@ import com.zhuinden.xkcdexample.redux.Action;
 import com.zhuinden.xkcdexample.redux.ReduxStore;
 import com.zhuinden.xkcdexample.redux.State;
 
-import java.util.Random;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -151,13 +149,7 @@ public class MainActivity
         }
     }
 
-    XkcdMapper xkcdMapper;
-
-    XkcdService xkcdService;
-
     ReduxStore reduxStore;
-
-    Random random;
 
     Realm realm;
 
@@ -292,10 +284,6 @@ public class MainActivity
                     break;
             }
         });
-
-        xkcdService = CustomApplication.get(this).xkcdService();
-        xkcdMapper = CustomApplication.get(this).xkcdMapper();
-        random = CustomApplication.get(this).random();
 
 
         Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
