@@ -30,7 +30,8 @@ public class ReduxStore {
 
     public void setInitialState(State state) {
         if(this.state.getValue() != initialState) {
-            throw new IllegalStateException("Initial state cannot be set after internal state has already been modified!");
+            throw new IllegalStateException(
+                    "Initial state cannot be set after internal state has already been modified!");
         }
         this.state.accept(state);
     }
@@ -63,8 +64,9 @@ public class ReduxStore {
 
     public void dispatch(Action action) {
         final State currentState = state.getValue();
-        reducer.reduce(currentState, action).map(newState -> StateChange.create(currentState, newState))
-                .doOnSuccess(stateChange -> state.accept(stateChange.newState()))
+        reducer.reduce(currentState, action)
+                .map(newState -> StateChange.create(currentState, newState))
+                .doOnNext(stateChange -> state.accept(stateChange.newState()))
                 .subscribe();
     }
 }

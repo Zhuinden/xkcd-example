@@ -46,7 +46,6 @@ public class CustomApplication
         xkcdService = retrofit.create(XkcdService.class);
         XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
         reduxStore = ReduxStore.builder().addReducer(xkcdReducer).build();
-        xkcdReducer.setStore(reduxStore);
     }
 
     public static CustomApplication get(Context context) {
