@@ -30,4 +30,28 @@ public class XkcdState {
     public static void putDownloading(StateBundle stateBundle, boolean isDownloading) {
         stateBundle.putBoolean("isDownloading", isDownloading);
     }
+
+    public static String link(StateBundle stateBundle) {
+        return stateBundle.getString("link");
+    }
+
+    public static void putLink(StateBundle stateBundle, String link) {
+        stateBundle.putString("link", link);
+    }
+
+    public static String altText(StateBundle stateBundle) {
+        return stateBundle.getString("altText");
+    }
+
+    public static void putAltText(StateBundle stateBundle, String alt) {
+        stateBundle.putString("altText", alt);
+    }
+
+    public static int number(StateBundle stateBundle) {
+        return stateBundle.getInt("number");
+    }
+
+    public static void putNumber(StateBundle stateBundle, int number) {
+        stateBundle.putInt("number", number);
+    }
 }

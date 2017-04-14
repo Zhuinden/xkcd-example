@@ -36,21 +36,19 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.zhuinden.statebundle.StateBundle;
 import com.zhuinden.xkcdexample.redux.Action;
 import com.zhuinden.xkcdexample.redux.ReduxStore;
-import com.zhuinden.xkcdexample.util.Unit;
+import com.zhuinden.xkcdexample.redux.State;
 
-import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
-import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -65,79 +63,26 @@ public class MainActivity
     @OnClick(R.id.xkcd_previous)
     public void previous() {
         reduxStore.dispatch(Action.create(XkcdActions.PREVIOUS_COMIC));
-        if(!isDownloading && current > 1) {
-            modifyCurrentAndUpdateComic(current - 1);
-        }
     }
 
     @OnClick(R.id.xkcd_next)
     public void next() {
         reduxStore.dispatch(Action.create(XkcdActions.NEXT_COMIC));
-        if(!isDownloading && current < max) {
-            modifyCurrentAndUpdateComic(current + 1);
-        }
     }
 
     @OnClick(R.id.xkcd_random)
     public void random() {
         reduxStore.dispatch(Action.create(XkcdActions.RANDOM_COMIC));
-        if(!isDownloading) {
-            modifyCurrentAndUpdateComic(random.nextInt(max) + 1);
-        }
     }
 
     private void openOrDownloadByNumber(int number) {
-        reduxStore.dispatch(Action.create(XkcdActions.JUMP_TO_NUMBER));
-        if(number > 0 && number <= max) {
-            modifyCurrentAndUpdateComic(number);
-        }
+        StateBundle stateBundle = new StateBundle();
+        XkcdState.putNumber(stateBundle, number);
+        reduxStore.dispatch(Action.create(XkcdActions.JUMP_TO_NUMBER, stateBundle));
     }
 
-    private void modifyCurrentAndUpdateComic(int number) {
-        this.current = number;
-        openOrDownloadCurrent();
-    }
-
-    private void openOrDownloadCurrent() {
-        if(!queryAndShowComicIfExists()) {
-            downloadCurrent();
-        }
-    }
-
-    private void downloadCurrent() {
-        download(service -> service.getNumber(current));
-    }
-
-    @SuppressWarnings("NewApi")
-    private void download(final MethodSelector methodSelector) {
-        Single.fromCallable((Callable<Object>) () -> {
-            try {
-                reduxStore.dispatch(Action.create(XkcdActions.START_DOWNLOAD));
-                isDownloading = true;
-                XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
-                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                try(Realm r = Realm.getDefaultInstance()) {
-                    r.executeTransaction(realm -> {
-                        realm.insertOrUpdate(xkcdComic);
-                        if(current == 0 || xkcdComic.getNum() > max) {
-                            max = xkcdComic.getNum();
-                        }
-                        current = xkcdComic.getNum();
-                    });
-                }
-            } catch(IOException e) {
-                reduxStore.dispatch(Action.create(XkcdActions.NETWORK_ERROR));
-                runOnUiThread(MainActivity.this::handleNetworkError);
-            } finally {
-                reduxStore.dispatch(Action.create(XkcdActions.FINISH_DOWNLOAD));
-                isDownloading = false;
-            }
-            return Unit.INSTANCE;
-        }).subscribeOn(Schedulers.io()).subscribe();
-    }
-
-    private boolean queryAndShowComicIfExists() {
-        XkcdComic xkcdComic = getCurrentXkcdComic();
+    private boolean queryAndShowComicIfExists(int number) {
+        XkcdComic xkcdComic = getXkcdComic(number);
         if(xkcdComic != null) {
             storeAndOpenComic(xkcdComic);
             return true;
@@ -145,8 +90,8 @@ public class MainActivity
         return false;
     }
 
-    private XkcdComic getCurrentXkcdComic() {
-        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
+    private XkcdComic getXkcdComic(int number) {
+        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, number).findFirst();
     }
 
     private void storeAndOpenComic(XkcdComic xkcdComic) {
@@ -162,33 +107,26 @@ public class MainActivity
     @OnLongClick(R.id.xkcd_image)
     public boolean longClickImage() {
         if(xkcdComic != null) {
-            reduxStore.dispatch(Action.create(XkcdActions.SHOW_ALT_TEXT));
-            showAltText(xkcdComic);
+            StateBundle stateBundle = new StateBundle();
+            XkcdState.putAltText(stateBundle, xkcdComic.getAlt());
+            reduxStore.dispatch(Action.create(XkcdActions.SHOW_ALT_TEXT, stateBundle));
             return true;
         }
         return false;
     }
 
-    private void showAltText(XkcdComic xkcdComic) {
-        Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
+    private void showAltText(String altText) {
+        Toast.makeText(this, altText, Toast.LENGTH_LONG).show();
     }
 
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
         if(xkcdComic != null) {
-            reduxStore.dispatch(Action.create(XkcdActions.OPEN_LINK));
-            openLinkIfExists(xkcdComic);
+            StateBundle stateBundle = new StateBundle();
+            XkcdState.putLink(stateBundle, xkcdComic.getLink());
+            reduxStore.dispatch(Action.create(XkcdActions.OPEN_LINK, stateBundle));
         }
     }
-
-    private void openLinkIfExists(XkcdComic xkcdComic) {
-        reduxStore.dispatch(Action.create(XkcdActions.OPEN_LINK));
-        if(xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
-            openUriWithBrowser(Uri.parse(xkcdComic.getLink()));
-        }
-    }
-
-    volatile boolean isDownloading = false;
 
     XkcdMapper xkcdMapper;
 
@@ -198,10 +136,6 @@ public class MainActivity
 
     Random random;
 
-    volatile int current = 0;
-
-    volatile int max = 0;
-
     Realm realm;
 
     RealmResults<XkcdComic> results;
@@ -210,15 +144,11 @@ public class MainActivity
 
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
         reduxStore.dispatch(Action.create(XkcdActions.COMIC_CHANGED));
-        if(!realm.isClosed()) {
-            queryAndShowComicIfExists();
-        }
     };
 
     AlertDialog jumpDialog;
 
     private void openJumpDialog() {
-        reduxStore.dispatch(Action.create(XkcdActions.OPEN_JUMP_DIALOG));
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_jump, null, false);
         final EditText jumpNumbers = ButterKnife.findById(dialogView, R.id.jump_numbers);
         jumpDialog = new AlertDialog.Builder(this) //
@@ -281,8 +211,6 @@ public class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
         reduxStore = CustomApplication.get(this).reduxStore();
         if(savedInstanceState != null) {
-            current = savedInstanceState.getInt("current");
-            max = savedInstanceState.getInt("max");
             if(reduxStore.isAtInitialState()) {
                 reduxStore.setInitialState(savedInstanceState.getParcelable("state"));
             }
@@ -300,8 +228,46 @@ public class MainActivity
         results = realm.where(XkcdComic.class).findAll();
         results.addChangeListener(realmChangeListener);
 
-        this.disposable = reduxStore.state().subscribe(stateChange -> {
+        this.disposable = reduxStore.state().observeOn(AndroidSchedulers.mainThread()).subscribe(stateChange -> {
             Log.i(TAG, "[" + stateChange + "]");
+            State state = stateChange.newState();
+            int current = XkcdState.current(state.state());
+
+            switch(state.action().type()) {
+                case XkcdActions.SHOW_ALT_TEXT:
+                    String altText = XkcdState.altText(state.action().payload());
+                    showAltText(altText);
+                    break;
+                case XkcdActions.PREVIOUS_COMIC:
+                case XkcdActions.NEXT_COMIC:
+                case XkcdActions.RANDOM_COMIC:
+                case XkcdActions.JUMP_TO_NUMBER:
+                case XkcdActions.GO_TO_LATEST:
+                    if(!queryAndShowComicIfExists(current)) {
+                        reduxStore.dispatch(Action.create(XkcdActions.DOWNLOAD_CURRENT));
+                    }
+                    break;
+                case XkcdActions.COMIC_CHANGED:
+                case XkcdActions.COMIC_SAVED:
+                case XkcdActions.INITIALIZE:
+                    queryAndShowComicIfExists(current);
+                    break;
+                case XkcdActions.NETWORK_ERROR:
+                    showNetworkError();
+                    break;
+                case XkcdActions.OPEN_LINK:
+                    String link = XkcdState.link(state.action().payload());
+                    if(link != null && !"".equals(link)) {
+                        openUriWithBrowser(Uri.parse(link));
+                    }
+                    break;
+                case XkcdActions.OPEN_IN_BROWSER:
+                    openUriWithBrowser(Uri.parse("https://xkcd.com/" + current));
+                    break;
+                case XkcdActions.OPEN_JUMP_DIALOG:
+                    openJumpDialog();
+                    break;
+            }
         });
 
         xkcdService = CustomApplication.get(this).xkcdService();
@@ -309,18 +275,12 @@ public class MainActivity
         random = CustomApplication.get(this).random();
 
         reduxStore.dispatch(Action.create(XkcdActions.INITIALIZE));
-        queryAndShowComicIfExists();
-        if(current == 0) {
-            downloadDefault();
-        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable("state", reduxStore.getState());
-        outState.putInt("current", current);
-        outState.putInt("max", max);
     }
 
     @Override
@@ -345,23 +305,15 @@ public class MainActivity
         switch(item.getItemId()) {
             case R.id.action_latest:
                 reduxStore.dispatch(Action.create(XkcdActions.GO_TO_LATEST));
-                downloadDefault();
                 return true;
             case R.id.action_jump:
                 reduxStore.dispatch(Action.create(XkcdActions.OPEN_JUMP_DIALOG));
-                openJumpDialog();
                 return true;
             case R.id.action_retry:
                 reduxStore.dispatch(Action.create(XkcdActions.RETRY_DOWNLOAD));
-                if(current == 0) {
-                    downloadDefault();
-                } else {
-                    downloadCurrent();
-                }
                 return true;
             case R.id.action_open_browser:
                 reduxStore.dispatch(Action.create(XkcdActions.OPEN_IN_BROWSER));
-                openUriWithBrowser(Uri.parse("https://xkcd.com/" + current));
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -372,35 +324,9 @@ public class MainActivity
         startActivity(intent);
     }
 
-    @SuppressWarnings("Convert2MethodRef")
-    private void downloadDefault() {
-        download(service -> service.getDefault());
-    }
-
     public static ReduxStore getStore(Context context) {
         // noinspection ResourceType
         return (ReduxStore) context.getSystemService("REDUX_STORE");
-    }
-
-    private interface MethodSelector {
-        Single<XkcdResponse> selectMethod(XkcdService xkcdService)
-                throws IOException;
-    }
-
-    private void handleNetworkError() {
-        reduxStore.dispatch(Action.create(XkcdActions.NETWORK_ERROR));
-        if(current != 0) { // not first start-up
-            showNetworkError();
-            return;
-        }
-        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-        if(maxNum == null) { // no image downloaded yet at all
-            showNetworkError();
-            return;
-        }
-        // handle if no internet but can reload from cache
-        max = maxNum.intValue();
-        modifyCurrentAndUpdateComic(max);
     }
 
     private void showNetworkError() {

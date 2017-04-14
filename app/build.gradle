@@ -43,7 +43,7 @@ dependencies {
     compile 'com.jakewharton:butterknife:8.5.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 
-    compile 'com.github.Zhuinden:state-bundle:1.1.0'
+    compile 'com.github.Zhuinden:state-bundle:1.1.1'
     compile 'nz.bradcampbell:paperparcel:2.0.1'
     annotationProcessor 'nz.bradcampbell:paperparcel-compiler:2.0.1'
     compile "io.reactivex.rxjava2:rxjava:2.0.8"

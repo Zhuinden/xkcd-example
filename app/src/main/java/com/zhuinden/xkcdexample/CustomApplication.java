@@ -44,7 +44,9 @@ public class CustomApplication
                 .addConverterFactory(LoganSquareConverterFactory.create()).addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
-        reduxStore = ReduxStore.builder().addReducer(new XkcdReducer()).build();
+        XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
+        reduxStore = ReduxStore.builder().addReducer(xkcdReducer).build();
+        xkcdReducer.setStore(reduxStore);
     }
 
     public static CustomApplication get(Context context) {

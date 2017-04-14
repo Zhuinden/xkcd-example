@@ -4,7 +4,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.statebundle.StateBundle;
 
 import io.reactivex.Observable;
-import io.reactivex.Single;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -64,8 +63,7 @@ public class ReduxStore {
 
     public void dispatch(Action action) {
         final State currentState = state.getValue();
-        Single<State> _newState = reducer.reduce(state.getValue(), action);
-        _newState.map(newState -> StateChange.create(currentState, newState))
+        reducer.reduce(currentState, action).map(newState -> StateChange.create(currentState, newState))
                 .doOnSuccess(stateChange -> state.accept(stateChange.newState()))
                 .subscribe();
     }
