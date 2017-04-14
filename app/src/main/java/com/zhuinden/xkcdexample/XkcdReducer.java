@@ -33,8 +33,14 @@ import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdState.current;
+import static com.zhuinden.xkcdexample.XkcdState.isDownloading;
+import static com.zhuinden.xkcdexample.XkcdState.max;
+import static com.zhuinden.xkcdexample.XkcdState.number;
 import static com.zhuinden.xkcdexample.XkcdState.putCurrent;
 import static com.zhuinden.xkcdexample.XkcdState.putDownloading;
+import static com.zhuinden.xkcdexample.XkcdState.putMax;
+import static com.zhuinden.xkcdexample.XkcdState.putNumber;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -57,9 +63,9 @@ public class XkcdReducer
     @Override
     public Single<State> reduce(State state, Action action) {
         StateBundle stateBundle = new StateBundle(state.state());
-        int current = XkcdState.current(stateBundle);
-        final int max = XkcdState.max(stateBundle);
-        boolean isDownloading = XkcdState.isDownloading(stateBundle);
+        int current = current(stateBundle);
+        final int max = max(stateBundle);
+        boolean isDownloading = isDownloading(stateBundle);
         int number;
         switch(action.type()) {
             case START_DOWNLOAD:
@@ -85,19 +91,19 @@ public class XkcdReducer
                 return Single.just(State.create(stateBundle, action));
             case GO_TO_LATEST:
                 return downloadDefault().flatMap(result -> {
-                    int _number = XkcdState.number(result);
-                    XkcdState.putCurrent(stateBundle, _number);
+                    int _number = number(result);
+                    putCurrent(stateBundle, _number);
                     if(max == 0 || _number > max) {
-                        XkcdState.putMax(stateBundle, XkcdState.number(result));
+                        putMax(stateBundle, number(result));
                     }
                     return Single.just(State.create(stateBundle, action));
                 });
             case RETRY_DOWNLOAD:
                 if(current == 0) {
                     return downloadDefault().flatMap(result -> {
-                        XkcdState.putCurrent(stateBundle, XkcdState.number(result));
+                        putCurrent(stateBundle, number(result));
                         if(max == 0) {
-                            XkcdState.putMax(stateBundle, XkcdState.number(result));
+                            putMax(stateBundle, number(result));
                         }
                         return Single.just(State.create(stateBundle, action));
                     });
@@ -105,7 +111,7 @@ public class XkcdReducer
                     return downloadNumber(current).flatMap((ignored) -> Single.just(State.create(stateBundle, action)));
                 }
             case JUMP_TO_NUMBER:
-                number = XkcdState.number(action.payload());
+                number = number(action.payload());
                 if(number > 0 && number <= max) {
                     putCurrent(stateBundle, number);
                     return downloadNumber(number).flatMap((ignored) -> Single.just(State.create(stateBundle, action)));
@@ -115,8 +121,8 @@ public class XkcdReducer
                 try(Realm realm = Realm.getDefaultInstance()) {
                     Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
                     if(maxNum != null && max <= 0) {
-                        XkcdState.putMax(stateBundle, maxNum.intValue());
-                        XkcdState.putCurrent(stateBundle, maxNum.intValue());
+                        putMax(stateBundle, maxNum.intValue());
+                        putCurrent(stateBundle, maxNum.intValue());
                     }
                 }
                 return Single.just(State.create(stateBundle, action));
@@ -125,21 +131,21 @@ public class XkcdReducer
             case DOWNLOAD_DEFAULT:
                 return downloadDefault().flatMap(o -> Single.just(State.create(stateBundle, action)));
             case COMIC_SAVED:
-                XkcdState.putCurrent(stateBundle, XkcdState.number(action.payload()));
+                putCurrent(stateBundle, number(action.payload()));
                 return Single.just(State.create(stateBundle, action));
             case INITIALIZE:
                 if(current == 0) {
                     return downloadDefault().flatMap(result -> {
-                        int _number = XkcdState.number(result);
+                        int _number = number(result);
                         if(_number != 0) {
-                            XkcdState.putCurrent(stateBundle, _number);
-                            XkcdState.putMax(stateBundle, _number);
+                            putCurrent(stateBundle, _number);
+                            putMax(stateBundle, _number);
                         } else {
                             try(Realm realm = Realm.getDefaultInstance()) { // i should make this be moved out
                                 Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
                                 if(maxNum != null && max <= 0) {
-                                    XkcdState.putMax(stateBundle, maxNum.intValue());
-                                    XkcdState.putCurrent(stateBundle, maxNum.intValue());
+                                    putMax(stateBundle, maxNum.intValue());
+                                    putCurrent(stateBundle, maxNum.intValue());
                                 }
                             }
                         }
@@ -183,7 +189,7 @@ public class XkcdReducer
                 try(Realm r = Realm.getDefaultInstance()) {
                     r.executeTransaction(realm -> {
                         realm.insertOrUpdate(xkcdComic);
-                        XkcdState.putNumber(stateBundle, xkcdComic.getNum());
+                        putNumber(stateBundle, xkcdComic.getNum());
                         reduxStore.dispatch(Action.create(XkcdActions.COMIC_SAVED, stateBundle));
                     });
                 }
