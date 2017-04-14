@@ -68,6 +68,12 @@ import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
+import static com.zhuinden.xkcdexample.XkcdState.altText;
+import static com.zhuinden.xkcdexample.XkcdState.current;
+import static com.zhuinden.xkcdexample.XkcdState.link;
+import static com.zhuinden.xkcdexample.XkcdState.putAltText;
+import static com.zhuinden.xkcdexample.XkcdState.putLink;
+import static com.zhuinden.xkcdexample.XkcdState.putNumber;
 
 public class MainActivity
         extends AppCompatActivity {
@@ -93,7 +99,7 @@ public class MainActivity
 
     private void openOrDownloadByNumber(int number) {
         StateBundle stateBundle = new StateBundle();
-        XkcdState.putNumber(stateBundle, number);
+        putNumber(stateBundle, number);
         reduxStore.dispatch(Action.create(JUMP_TO_NUMBER, stateBundle));
     }
 
@@ -124,7 +130,7 @@ public class MainActivity
     public boolean longClickImage() {
         if(xkcdComic != null) {
             StateBundle stateBundle = new StateBundle();
-            XkcdState.putAltText(stateBundle, xkcdComic.getAlt());
+            putAltText(stateBundle, xkcdComic.getAlt());
             reduxStore.dispatch(Action.create(SHOW_ALT_TEXT, stateBundle));
             return true;
         }
@@ -139,7 +145,7 @@ public class MainActivity
     public void clickImage() {
         if(xkcdComic != null) {
             StateBundle stateBundle = new StateBundle();
-            XkcdState.putLink(stateBundle, xkcdComic.getLink());
+            putLink(stateBundle, xkcdComic.getLink());
             reduxStore.dispatch(Action.create(OPEN_LINK, stateBundle));
         }
     }
@@ -247,11 +253,11 @@ public class MainActivity
         this.disposable = reduxStore.state().observeOn(AndroidSchedulers.mainThread()).subscribe(stateChange -> {
             Log.i(TAG, "[" + stateChange + "]");
             State state = stateChange.newState();
-            int current = XkcdState.current(state.state());
+            int current = current(state.state());
 
             switch(state.action().type()) {
                 case SHOW_ALT_TEXT:
-                    String altText = XkcdState.altText(state.action().payload());
+                    String altText = altText(state.action().payload());
                     showAltText(altText);
                     break;
                 case PREVIOUS_COMIC:
@@ -272,7 +278,7 @@ public class MainActivity
                     showNetworkError();
                     break;
                 case OPEN_LINK:
-                    String link = XkcdState.link(state.action().payload());
+                    String link = link(state.action().payload());
                     if(link != null && !"".equals(link)) {
                         openUriWithBrowser(Uri.parse(link));
                     }
