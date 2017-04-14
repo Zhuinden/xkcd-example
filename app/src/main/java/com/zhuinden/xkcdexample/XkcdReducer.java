@@ -212,7 +212,8 @@ public class XkcdReducer
             StateBundle stateBundle;
             State state = initialState;
             try {
-                state = reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD)).blockingFirst();
+                state = reduce(initialState,
+                        Action.create(XkcdActions.START_DOWNLOAD)).blockingFirst(); // TODO: somehow turn these into flatMap()?
                 emitter.onNext(state);
                 stateBundle = new StateBundle(state.state());
                 XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
