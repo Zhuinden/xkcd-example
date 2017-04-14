@@ -510,11 +510,11 @@ public class CopyOnWriteStateBundle
         StateBundle stateBundle;
 
         private Builder() {
-            stateBundle = new StateBundle();
+            this.stateBundle = new StateBundle();
         }
 
         private Builder(StateBundle stateBundle) {
-            stateBundle = new StateBundle(stateBundle);
+            this.stateBundle = new StateBundle(stateBundle);
         }
 
         /**
