@@ -68,8 +68,6 @@ public class XkcdReducer
             case FINISH_DOWNLOAD:
                 putDownloading(stateBundle, false);
                 return Single.just(State.create(stateBundle, action));
-            case COMIC_CHANGED:
-                return Single.just(State.create(stateBundle, action));
             case NEXT_COMIC:
                 if(!isDownloading && current < max) {
                     putCurrent(stateBundle, current + 1);
@@ -106,18 +104,12 @@ public class XkcdReducer
                 } else {
                     return downloadNumber(current).flatMap((ignored) -> Single.just(State.create(stateBundle, action)));
                 }
-            case OPEN_IN_BROWSER:
-                return Single.just(State.create(stateBundle, action));
             case JUMP_TO_NUMBER:
                 number = XkcdState.number(action.payload());
                 if(number > 0 && number <= max) {
                     putCurrent(stateBundle, number);
                     return downloadNumber(number).flatMap((ignored) -> Single.just(State.create(stateBundle, action)));
                 }
-                return Single.just(State.create(stateBundle, action));
-            case OPEN_LINK:
-                return Single.just(State.create(stateBundle, action));
-            case SHOW_ALT_TEXT:
                 return Single.just(State.create(stateBundle, action));
             case NETWORK_ERROR:
                 try(Realm realm = Realm.getDefaultInstance()) {
@@ -157,6 +149,10 @@ public class XkcdReducer
                     return Single.just(State.create(stateBundle, action));
                 }
             case OPEN_JUMP_DIALOG:
+            case OPEN_LINK:
+            case SHOW_ALT_TEXT:
+            case OPEN_IN_BROWSER:
+            case COMIC_CHANGED:
                 return Single.just(State.create(stateBundle, action));
         }
         return Single.just(state);
