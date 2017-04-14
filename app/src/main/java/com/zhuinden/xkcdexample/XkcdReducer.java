@@ -190,11 +190,11 @@ public class XkcdReducer
                     r.executeTransaction(realm -> {
                         realm.insertOrUpdate(xkcdComic);
                         putNumber(stateBundle, xkcdComic.getNum());
-                        reduxStore.dispatch(Action.create(XkcdActions.COMIC_SAVED, stateBundle));
+                        reduxStore.dispatch(Action.create(COMIC_SAVED, stateBundle));
                     });
                 }
             } catch(Exception e) {
-                reduxStore.dispatch(Action.create(XkcdActions.NETWORK_ERROR));
+                reduxStore.dispatch(Action.create(NETWORK_ERROR));
             } finally {
                 //reduxStore.dispatch(Action.create(XkcdActions.FINISH_DOWNLOAD)); // FIXME RACE CONDITION IF CLICKS ARE TOO FAST!
             }
