@@ -93,7 +93,7 @@ public class XkcdReducer
                 return createState(action, stateBundle);
             case GO_TO_LATEST:
                 return downloadDefault(State.create(stateBundle, action)).flatMap(result -> {
-                    CopyOnWriteStateBundle _stateBundle = (result.state());
+                    CopyOnWriteStateBundle _stateBundle = result.state();
                     int _number = number(result.state());
                     if(_number != 0) {
                         _stateBundle = putCurrent(_stateBundle, _number);
@@ -107,7 +107,7 @@ public class XkcdReducer
             case RETRY_DOWNLOAD:
                 if(current == 0) {
                     return downloadDefault(State.create(stateBundle, action)).flatMap(result -> {
-                        CopyOnWriteStateBundle _stateBundle = (result.state());
+                        CopyOnWriteStateBundle _stateBundle = result.state();
                         int _number = number(result.state());
                         if(_number != 0) {
                             _stateBundle = putCurrent(_stateBundle, _number);
@@ -137,12 +137,12 @@ public class XkcdReducer
                 return createState(action, stateBundle);
             case DOWNLOAD_CURRENT:
                 return downloadNumber(State.create(stateBundle, action), current).flatMap(result -> {
-                    CopyOnWriteStateBundle _stateBundle = (result.state());
+                    CopyOnWriteStateBundle _stateBundle = result.state();
                     return createState(result.action(), _stateBundle);
                 });
             case DOWNLOAD_DEFAULT:
                 return downloadDefault(State.create(stateBundle, action)).flatMap(result -> {
-                    CopyOnWriteStateBundle _stateBundle = (result.state());
+                    CopyOnWriteStateBundle _stateBundle = result.state();
                     return createState(result.action(), _stateBundle);
                 });
             case COMIC_SAVED:
@@ -151,7 +151,7 @@ public class XkcdReducer
             case INITIALIZE:
                 if(current == 0) {
                     return downloadDefault(State.create(stateBundle, action)).flatMap(result -> {
-                        CopyOnWriteStateBundle _stateBundle = (result.state());
+                        CopyOnWriteStateBundle _stateBundle = result.state();
                         int _number = number(result.state());
                         if(_number != 0) {
                             _stateBundle = putCurrent(_stateBundle, _number);
