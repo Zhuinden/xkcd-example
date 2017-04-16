@@ -1,5 +1,6 @@
 package com.zhuinden.xkcdexample.util;
 
+import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.SparseArray;
@@ -21,6 +22,11 @@ public class CopyOnWriteStateBundle
     }
 
     public CopyOnWriteStateBundle(StateBundle stateBundle) {
+        super.putAll(stateBundle);
+    }
+
+    protected CopyOnWriteStateBundle(Parcel in) {
+        StateBundle stateBundle = new StateBundle(in);
         super.putAll(stateBundle);
     }
 
@@ -497,6 +503,18 @@ public class CopyOnWriteStateBundle
         stateBundle.putBundle(key, value);
         return new CopyOnWriteStateBundle(stateBundle);
     }
+
+    public static final Creator<CopyOnWriteStateBundle> CREATOR = new Creator<CopyOnWriteStateBundle>() {
+        @Override
+        public CopyOnWriteStateBundle createFromParcel(Parcel in) {
+            return new CopyOnWriteStateBundle(in);
+        }
+
+        @Override
+        public CopyOnWriteStateBundle[] newArray(int size) {
+            return new CopyOnWriteStateBundle[size];
+        }
+    };
 
     public static Builder builder() {
         return new Builder();
