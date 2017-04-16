@@ -1,4 +1,6 @@
-package com.zhuinden.xkcdexample.data.entity;
+package com.zhuinden.xkcdexample;
+
+import com.bluelinelabs.logansquare.annotation.JsonField;
 
 import io.realm.RealmObject;
 import io.realm.annotations.Index;

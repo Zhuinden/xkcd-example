@@ -1,11 +1,9 @@
-package com.zhuinden.xkcdexample.application;
+package com.zhuinden.xkcdexample;
 
 import android.app.Application;
 import android.content.Context;
 
 import com.github.aurae.retrofit2.LoganSquareConverterFactory;
-import com.zhuinden.xkcdexample.data.mapper.XkcdMapper;
-import com.zhuinden.xkcdexample.domain.service.XkcdService;
 
 import java.util.Random;
 import java.util.concurrent.Executor;

@@ -1,7 +1,6 @@
-package com.zhuinden.xkcdexample.data.mapper;
+package com.zhuinden.xkcdexample;
 
-import com.zhuinden.xkcdexample.data.entity.XkcdComic;
-import com.zhuinden.xkcdexample.domain.data.XkcdResponse;
+import com.bluelinelabs.logansquare.annotation.JsonField;
 
 /**
  * Created by Zhuinden on 2017.04.11..

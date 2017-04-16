@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhuinden.xkcdexample.presentation.paths;
+package com.zhuinden.xkcdexample;
 
 import android.content.Context;
 import android.content.Intent;
@@ -34,13 +34,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.zhuinden.xkcdexample.R;
-import com.zhuinden.xkcdexample.XkcdComicFields;
-import com.zhuinden.xkcdexample.application.CustomApplication;
-import com.zhuinden.xkcdexample.data.entity.XkcdComic;
-import com.zhuinden.xkcdexample.data.mapper.XkcdMapper;
-import com.zhuinden.xkcdexample.domain.data.XkcdResponse;
-import com.zhuinden.xkcdexample.domain.service.XkcdService;
 
 import java.io.IOException;
 import java.util.Random;
@@ -56,9 +49,9 @@ import io.realm.RealmResults;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class XkcdActivity
+public class MainActivity
         extends AppCompatActivity {
-    private static final String TAG = "XkcdActivity";
+    private static final String TAG = "MainActivity";
 
     @BindView(R.id.xkcd_image)
     ImageView image;
@@ -351,7 +344,7 @@ public class XkcdActivity
                     });
                 }
             } catch(IOException e) {
-                runOnUiThread(XkcdActivity.this::handleNetworkError);
+                runOnUiThread(MainActivity.this::handleNetworkError);
             } finally {
                 isDownloading = false;
             }
@@ -374,6 +367,6 @@ public class XkcdActivity
     }
 
     private void showNetworkError() {
-        Toast.makeText(XkcdActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
     }
 }

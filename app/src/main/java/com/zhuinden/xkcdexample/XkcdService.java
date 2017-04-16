@@ -1,6 +1,4 @@
-package com.zhuinden.xkcdexample.domain.service;
-
-import com.zhuinden.xkcdexample.domain.data.XkcdResponse;
+package com.zhuinden.xkcdexample;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
