@@ -35,157 +35,76 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import java.io.IOException;
-import java.util.Random;
-import java.util.concurrent.Executor;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
 import io.realm.Realm;
-import io.realm.RealmChangeListener;
-import io.realm.RealmResults;
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class XkcdActivity
-        extends AppCompatActivity {
+        extends AppCompatActivity
+        implements XkcdPresenter.ViewContract {
     private static final String TAG = "XkcdActivity";
+
+    XkcdPresenter xkcdPresenter;
 
     @BindView(R.id.xkcd_image)
     ImageView image;
 
     @OnClick(R.id.xkcd_previous)
     public void previous() {
-        if(!isDownloading && current > 1) {
-            modifyCurrentAndUpdateComic(current - 1);
-        }
+        xkcdPresenter.openPreviousComic();
     }
 
     @OnClick(R.id.xkcd_next)
     public void next() {
-        if(!isDownloading && current < max) {
-            modifyCurrentAndUpdateComic(current + 1);
-        }
+        xkcdPresenter.openNextComic();
     }
 
     @OnClick(R.id.xkcd_random)
     public void random() {
-        if(!isDownloading) {
-            modifyCurrentAndUpdateComic(random.nextInt(max) + 1);
-        }
+        xkcdPresenter.openRandomComic();
     }
 
-    private void openOrDownloadByNumber(int number) {
-        if(number > 0 && number <= max) {
-            modifyCurrentAndUpdateComic(number);
-        }
-    }
-
-    private void modifyCurrentAndUpdateComic(int number) {
-        this.current = number;
-        openOrDownloadCurrent();
-    }
-
-    private void openOrDownloadCurrent() {
-        if(!queryAndShowComicIfExists()) {
-            downloadCurrent();
-        }
-    }
-
-    private void downloadCurrent() {
-        download(service -> service.getNumber(current));
-    }
-
-    private void download(MethodSelector methodSelector) {
-        executor.execute(new DownloadTask(methodSelector));
-    }
-
-    private boolean queryAndShowComicIfExists() {
-        XkcdComic xkcdComic = getCurrentXkcdComic();
-        if(xkcdComic != null) {
-            storeAndOpenComic(xkcdComic);
-            return true;
-        }
-        return false;
-    }
-
-    private XkcdComic getCurrentXkcdComic() {
-        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
-    }
-
-    private void storeAndOpenComic(XkcdComic xkcdComic) {
-        this.xkcdComic = xkcdComic;
-        updateUi(xkcdComic);
-    }
-
-    private void updateUi(XkcdComic xkcdComic) {
+    @Override
+    public void updateUi(XkcdComic xkcdComic) {
         getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
         Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
     }
 
     @OnLongClick(R.id.xkcd_image)
     public boolean longClickImage() {
-        if(xkcdComic != null) {
-            showAltText(xkcdComic);
-            return true;
-        }
-        return false;
+        return xkcdPresenter.showAltText();
     }
 
-    private void showAltText(XkcdComic xkcdComic) {
+    @Override
+    public void showAltText(XkcdComic xkcdComic) {
         Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
     }
 
     @OnClick(R.id.xkcd_image)
     public void clickImage() {
-        if(xkcdComic != null) {
-            openLinkIfExists(xkcdComic);
-        }
+        xkcdPresenter.openLink();
     }
 
-    private void openLinkIfExists(XkcdComic xkcdComic) {
-        if(xkcdComic.getLink() != null && !"".equals(xkcdComic.getLink())) {
-            openUriWithBrowser(Uri.parse(xkcdComic.getLink()));
-        }
+    @Override
+    public void openLink(String uri) {
+        openUriWithBrowser(Uri.parse(uri));
     }
-
-    volatile boolean isDownloading = false;
-
-    XkcdMapper xkcdMapper;
-
-    XkcdService xkcdService;
-
-    Executor executor;
-    Random random;
-
-    volatile int current = 0;
-
-    volatile int max = 0;
 
     Realm realm;
 
-    RealmResults<XkcdComic> results;
-
-    XkcdComic xkcdComic;
-
-    RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
-        if(!realm.isClosed()) {
-            queryAndShowComicIfExists();
-        }
-    };
-
     AlertDialog jumpDialog;
 
-    private void openJumpDialog() {
+    @Override
+    public void openJumpDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_jump, null, false);
         final EditText jumpNumbers = ButterKnife.findById(dialogView, R.id.jump_numbers);
         jumpDialog = new AlertDialog.Builder(this) //
                 .setTitle(R.string.jump_to) //
                 .setView(dialogView) //
                 .setPositiveButton(R.string.jump, (dialog, which) -> {
-                    startJumpToNumber(jumpNumbers);
+                    xkcdPresenter.startJumpToNumber(jumpNumbers.getText().toString());
                     hideKeyboard(jumpNumbers);
                 }).setNegativeButton(R.string.cancel, (dialog, which) -> {
                     hideKeyboard(jumpNumbers);
@@ -194,7 +113,7 @@ public class XkcdActivity
                 }).create();
         jumpNumbers.setOnEditorActionListener((v, actionId, event) -> {
             if((event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) || actionId == EditorInfo.IME_ACTION_DONE) {
-                startJumpToNumber(jumpNumbers);
+                xkcdPresenter.startJumpToNumber(jumpNumbers.getText().toString());
                 hideKeyboard(jumpNumbers);
                 cancelJumpDialogIfShowing();
                 return true;
@@ -205,12 +124,9 @@ public class XkcdActivity
         showKeyboard(jumpNumbers);
     }
 
-    private void startJumpToNumber(EditText jumpNumbers) {
-        String _number = jumpNumbers.getText().toString();
-        if(!"".equals(_number)) {
-            int number = Integer.parseInt(_number);
-            openOrDownloadByNumber(number);
-        }
+    @Override
+    public void doOnUiThread(Runnable runnable) {
+        runOnUiThread(runnable);
     }
 
     private void cancelJumpDialogIfShowing() {
@@ -237,37 +153,29 @@ public class XkcdActivity
     @SuppressWarnings("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        realm = Realm.getDefaultInstance();
+        xkcdPresenter = new XkcdPresenter(realm,
+                CustomApplication.get(this).xkcdMapper(),
+                CustomApplication.get(this).xkcdService(),
+                CustomApplication.get(this).executor(),
+                CustomApplication.get(this).random());
         if(savedInstanceState != null) {
-            current = savedInstanceState.getInt("current");
-            max = savedInstanceState.getInt("max");
+            xkcdPresenter.restoreState(savedInstanceState.getParcelable("PRESENTER_STATE"));
         }
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        realm = Realm.getDefaultInstance();
-        results = realm.where(XkcdComic.class).findAll();
-        results.addChangeListener(realmChangeListener);
-
-        xkcdService = CustomApplication.get(this).xkcdService();
-        xkcdMapper = CustomApplication.get(this).xkcdMapper();
-        executor = CustomApplication.get(this).executor();
-        random = CustomApplication.get(this).random();
-
-        queryAndShowComicIfExists();
-        if(current == 0) {
-            downloadDefault();
-        }
+        xkcdPresenter.attachView(this);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt("current", current);
-        outState.putInt("max", max);
+        outState.putParcelable("PRESENTER_STATE", xkcdPresenter.saveState());
     }
 
     @Override
     protected void onDestroy() {
-        results.removeChangeListener(realmChangeListener);
+        xkcdPresenter.detachView();
         realm.close();
         realm = null;
         cancelJumpDialogIfShowing();
@@ -284,20 +192,16 @@ public class XkcdActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_latest:
-                downloadDefault();
+                xkcdPresenter.goToLatest();
                 return true;
             case R.id.action_jump:
-                openJumpDialog();
+                xkcdPresenter.jumpToNumber();
                 return true;
             case R.id.action_retry:
-                if(current == 0) {
-                    downloadDefault();
-                } else {
-                    downloadCurrent();
-                }
+                xkcdPresenter.retryDownload();
                 return true;
             case R.id.action_open_browser:
-                openUriWithBrowser(Uri.parse("https://xkcd.com/" + current));
+                xkcdPresenter.openInBrowser();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -308,65 +212,8 @@ public class XkcdActivity
         startActivity(intent);
     }
 
-    @SuppressWarnings("Convert2MethodRef")
-    private void downloadDefault() {
-        download(service -> service.getDefault());
-    }
-
-    private interface MethodSelector {
-        Call<XkcdResponse> selectMethod(XkcdService xkcdService)
-                throws IOException;
-    }
-
-    private class DownloadTask
-            implements Runnable {
-        MethodSelector methodSelector;
-
-        public DownloadTask(MethodSelector methodSelector) {
-            this.methodSelector = methodSelector;
-        }
-
-        @Override
-        @SuppressWarnings("NewApi")
-        public void run() {
-            try {
-                isDownloading = true;
-                Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService).execute();
-                XkcdResponse xkcdResponse = _xkcdResponse.body();
-                XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                try(Realm r = Realm.getDefaultInstance()) {
-                    r.executeTransaction(realm -> {
-                        realm.insertOrUpdate(xkcdComic);
-                        if(current == 0 || xkcdComic.getNum() > max) {
-                            max = xkcdComic.getNum();
-                        }
-                        current = xkcdComic.getNum();
-                    });
-                }
-            } catch(IOException e) {
-                runOnUiThread(XkcdActivity.this::handleNetworkError);
-            } finally {
-                isDownloading = false;
-            }
-        }
-    }
-
-    private void handleNetworkError() {
-        if(current != 0) { // not first start-up
-            showNetworkError();
-            return;
-        }
-        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-        if(maxNum == null) { // no image downloaded yet at all
-            showNetworkError();
-            return;
-        }
-        // handle if no internet but can reload from cache
-        max = maxNum.intValue();
-        modifyCurrentAndUpdateComic(max);
-    }
-
-    private void showNetworkError() {
+    @Override
+    public void showNetworkError() {
         Toast.makeText(XkcdActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
     }
 }
