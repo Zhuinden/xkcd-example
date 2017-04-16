@@ -268,9 +268,8 @@ public class XkcdReducer
     private CopyOnWriteStateBundle readNetworkErrorParamFromRealm(CopyOnWriteStateBundle param) {
         try(Realm realm = Realm.getDefaultInstance()) {
             Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-            param = putInitMax(param, maxNum == null ? -1 : maxNum.intValue());
+            return putInitMax(param, maxNum == null ? -1 : maxNum.intValue());
         }
-        return param;
     }
 
     @SuppressWarnings("NewApi")
