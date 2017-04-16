@@ -1,4 +1,4 @@
-package com.zhuinden.xkcdexample;
+package com.zhuinden.xkcdexample.domain.data;
 
 import com.bluelinelabs.logansquare.annotation.JsonField;
 import com.bluelinelabs.logansquare.annotation.JsonObject;
