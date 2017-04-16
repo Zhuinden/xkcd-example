@@ -53,7 +53,6 @@ import io.realm.RealmResults;
 
 import static com.zhuinden.xkcdexample.XkcdActions.COMIC_CHANGED;
 import static com.zhuinden.xkcdexample.XkcdActions.COMIC_SAVED;
-import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT;
 import static com.zhuinden.xkcdexample.XkcdActions.GO_TO_LATEST;
 import static com.zhuinden.xkcdexample.XkcdActions.INITIALIZE;
 import static com.zhuinden.xkcdexample.XkcdActions.JUMP_TO_NUMBER;
@@ -254,7 +253,7 @@ public class MainActivity
                 case JUMP_TO_NUMBER:
                 case GO_TO_LATEST:
                     if(!queryAndShowComicIfExists(current)) {
-                        reduxStore.dispatch(Action.create(DOWNLOAD_CURRENT));
+                        reduxStore.dispatch(Action.create(RETRY_DOWNLOAD));
                     }
                     break;
                 case COMIC_CHANGED:

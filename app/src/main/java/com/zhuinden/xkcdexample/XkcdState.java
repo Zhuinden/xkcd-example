@@ -49,11 +49,11 @@ public class XkcdState {
     }
 
     public static String altText(CopyOnWriteStateBundle stateBundle) {
-        return stateBundle.getString("ALT_TEXT");
+        return stateBundle.getString(ALT_TEXT);
     }
 
     public static CopyOnWriteStateBundle putAltText(CopyOnWriteStateBundle stateBundle, String alt) {
-        return (CopyOnWriteStateBundle) stateBundle.putString("ALT_TEXT", alt);
+        return (CopyOnWriteStateBundle) stateBundle.putString(ALT_TEXT, alt);
     }
 
     public static int number(CopyOnWriteStateBundle stateBundle) {

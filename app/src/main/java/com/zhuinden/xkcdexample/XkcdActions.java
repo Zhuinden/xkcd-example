@@ -20,7 +20,5 @@ public class XkcdActions {
     public static final String NETWORK_ERROR = "NETWORK_ERROR";
     public static final String INITIALIZE = "INITIALIZE";
     public static final String OPEN_JUMP_DIALOG = "OPEN_JUMP_DIALOG";
-    public static final String DOWNLOAD_DEFAULT = "DOWNLOAD_DEFAULT";
-    public static final String DOWNLOAD_CURRENT = "DOWNLOAD_CURRENT";
     public static final String COMIC_SAVED = "COMIC_SAVED";
 }
