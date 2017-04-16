@@ -101,15 +101,15 @@ public class XkcdReducer
         if(current == 0) {
             return downloadDefault(state, action).flatMap(result -> {
                 CopyOnWriteStateBundle stateBundle = result.state();
-                int _number = number(result.state());
-                if(_number != 0) {
-                    stateBundle = putCurrent(stateBundle, _number);
-                    stateBundle = putMax(stateBundle, _number);
+                int number = number(result.state());
+                if(number != 0) {
+                    stateBundle = putCurrent(stateBundle, number);
+                    stateBundle = putMax(stateBundle, number);
                 } else {
-                    int _maxNum = initMax(action.payload());
-                    if(_maxNum != -1) {
-                        stateBundle = putCurrent(stateBundle, _maxNum);
-                        stateBundle = putMax(stateBundle, _maxNum);
+                    int maxNum = initMax(action.payload());
+                    if(maxNum != -1) {
+                        stateBundle = putCurrent(stateBundle, maxNum);
+                        stateBundle = putMax(stateBundle, maxNum);
                     }
                 }
                 return createState(action, stateBundle);
