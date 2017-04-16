@@ -49,9 +49,9 @@ import io.realm.RealmResults;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MainActivity
+public class XkcdActivity
         extends AppCompatActivity {
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "XkcdActivity";
 
     @BindView(R.id.xkcd_image)
     ImageView image;
@@ -344,7 +344,7 @@ public class MainActivity
                     });
                 }
             } catch(IOException e) {
-                runOnUiThread(MainActivity.this::handleNetworkError);
+                runOnUiThread(XkcdActivity.this::handleNetworkError);
             } finally {
                 isDownloading = false;
             }
@@ -367,6 +367,6 @@ public class MainActivity
     }
 
     private void showNetworkError() {
-        Toast.makeText(MainActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
+        Toast.makeText(XkcdActivity.this, R.string.please_retry_with_active_internet, Toast.LENGTH_SHORT).show();
     }
 }
