@@ -30,7 +30,7 @@ import static com.zhuinden.xkcdexample.XkcdActions.OPEN_JUMP_DIALOG;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
 import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
-import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdState.current;
@@ -76,7 +76,7 @@ public class XkcdReducer
                 return randomComic(state, action);
             case GO_TO_LATEST:
                 return goToLatest(state, action);
-            case RETRY_DOWNLOAD:
+            case DOWNLOAD_CURRENT_OR_RETRY:
                 return retryDownload(state, action);
             case JUMP_TO_NUMBER:
                 return jumpToNumber(state, action);
@@ -243,6 +243,7 @@ public class XkcdReducer
     @SuppressWarnings("NewApi")
     private Observable<State> download(final State initialState, Action action, final MethodSelector methodSelector) {
         return Observable.create((ObservableOnSubscribe<State>) emitter -> {
+            emitter.onNext(State.create(initialState.state(), action));
             reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD, action.payload())).flatMap((state) -> {
                 emitter.onNext(state);
                 try {
@@ -258,7 +259,6 @@ public class XkcdReducer
                 return reduce(state, Action.create(XkcdActions.FINISH_DOWNLOAD));
             }).subscribe(state -> {
                 emitter.onNext(state);
-                emitter.onNext(State.create(state.state(), action));
                 emitter.onComplete();
             });
         }).subscribeOn(Schedulers.io());

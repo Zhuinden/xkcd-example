@@ -9,7 +9,7 @@ public class XkcdActions {
     public static final String PREVIOUS_COMIC = "PREVIOUS_COMIC";
     public static final String RANDOM_COMIC = "RANDOM_COMIC";
     public static final String GO_TO_LATEST = "GO_TO_LATEST";
-    public static final String RETRY_DOWNLOAD = "RETRY_DOWNLOAD";
+    public static final String DOWNLOAD_CURRENT_OR_RETRY = "DOWNLOAD_CURRENT_OR_RETRY";
     public static final String OPEN_IN_BROWSER = "OPEN_IN_BROWSER";
     public static final String JUMP_TO_NUMBER = "JUMP_TO_NUMBER";
     public static final String OPEN_LINK = "OPEN_LINK";

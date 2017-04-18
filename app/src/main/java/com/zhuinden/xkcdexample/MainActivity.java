@@ -63,7 +63,7 @@ import static com.zhuinden.xkcdexample.XkcdActions.OPEN_JUMP_DIALOG;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
 import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
-import static com.zhuinden.xkcdexample.XkcdActions.RETRY_DOWNLOAD;
+import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdState.altText;
 import static com.zhuinden.xkcdexample.XkcdState.current;
@@ -238,7 +238,7 @@ public class MainActivity
         results.addChangeListener(realmChangeListener);
 
         this.disposable = reduxStore.state().observeOn(AndroidSchedulers.mainThread()).subscribe(stateChange -> {
-            Log.i(TAG, "[" + stateChange + "]");
+            Log.i(TAG, "[" + stateChange.newState() + "]");
             State state = stateChange.newState();
             int current = current(state.state());
 
@@ -253,7 +253,7 @@ public class MainActivity
                 case JUMP_TO_NUMBER:
                 case GO_TO_LATEST:
                     if(!queryAndShowComicIfExists(current)) {
-                        reduxStore.dispatch(Action.create(RETRY_DOWNLOAD));
+                        reduxStore.dispatch(Action.create(DOWNLOAD_CURRENT_OR_RETRY));
                     }
                     break;
                 case COMIC_CHANGED:
@@ -318,7 +318,7 @@ public class MainActivity
                 reduxStore.dispatch(Action.create(OPEN_JUMP_DIALOG));
                 return true;
             case R.id.action_retry:
-                reduxStore.dispatch(Action.create(RETRY_DOWNLOAD));
+                reduxStore.dispatch(Action.create(DOWNLOAD_CURRENT_OR_RETRY));
                 return true;
             case R.id.action_open_browser:
                 reduxStore.dispatch(Action.create(OPEN_IN_BROWSER));
