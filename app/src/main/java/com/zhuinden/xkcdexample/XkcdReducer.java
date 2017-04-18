@@ -19,6 +19,7 @@ import io.realm.Realm;
 
 import static com.zhuinden.xkcdexample.XkcdActions.COMIC_CHANGED;
 import static com.zhuinden.xkcdexample.XkcdActions.COMIC_SAVED;
+import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdActions.FINISH_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdActions.GO_TO_LATEST;
 import static com.zhuinden.xkcdexample.XkcdActions.INITIALIZE;
@@ -30,7 +31,6 @@ import static com.zhuinden.xkcdexample.XkcdActions.OPEN_JUMP_DIALOG;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
 import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
-import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
 import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD;
 import static com.zhuinden.xkcdexample.XkcdState.current;
@@ -249,9 +249,11 @@ public class XkcdReducer
                 try {
                     XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
                     XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                    return reduce(state, Action.create(COMIC_SAVED, writeComicToRealm(state.action().payload(), xkcdComic)));
+                    writeComicToRealm(xkcdComic); // side-effect
+                    return reduce(state, Action.create(COMIC_SAVED, putNumber(state.action().payload(), xkcdComic.getNum())));
                 } catch(Exception e) {
-                    return reduce(state, Action.create(NETWORK_ERROR, readNetworkErrorParamFromRealm(state.action().payload())));
+                    int initMax = readNetworkErrorParamFromRealm(); // side-effect
+                    return reduce(state, Action.create(NETWORK_ERROR, putInitMax(state.action().payload(), initMax)));
                 }
             }).concatMap((state) -> {
                 emitter.onNext(state);
@@ -264,27 +266,26 @@ public class XkcdReducer
     }
 
     @SuppressWarnings("NewApi")
-    private CopyOnWriteStateBundle readNetworkErrorParamFromRealm(CopyOnWriteStateBundle param) {
+    private int readNetworkErrorParamFromRealm() {
         try(Realm realm = Realm.getDefaultInstance()) {
             Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
-            return putInitMax(param, maxNum == null ? -1 : maxNum.intValue());
+            return maxNum == null ? -1 : maxNum.intValue();
         }
     }
 
     @SuppressWarnings("NewApi")
-    private CopyOnWriteStateBundle writeComicToRealm(CopyOnWriteStateBundle stateBundle, XkcdComic xkcdComic) {
+    private void writeComicToRealm(XkcdComic xkcdComic) {
         try(Realm realm = Realm.getDefaultInstance()) {
             try {
                 realm.beginTransaction();
                 realm.insertOrUpdate(xkcdComic);
-                stateBundle = putNumber(stateBundle, xkcdComic.getNum());
                 realm.commitTransaction();
             } catch(Exception e) {
                 if(realm.isInTransaction()) {
                     realm.cancelTransaction();
                 }
+                throw new RuntimeException(e);
             }
         }
-        return stateBundle;
     }
 }
