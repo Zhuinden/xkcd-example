@@ -99,7 +99,7 @@ public class XkcdReducer
     private Observable<State> initialize(State state, Action action) {
         int current = current(state.state());
         if(current == 0) {
-            return downloadDefault(state, action).flatMap(result -> {
+            return downloadDefault(state, action).concatMap(result -> {
                 CopyOnWriteStateBundle stateBundle = result.state();
                 int number = number(result.state());
                 if(number != 0) {
@@ -126,7 +126,7 @@ public class XkcdReducer
     }
 
     private Observable<State> downloadCurrent(State state, Action action) {
-        return downloadNumber(state, action, current(state.state())).flatMap(result -> createState(result.action(), result.state()));
+        return downloadNumber(state, action, current(state.state())).concatMap(result -> createState(result.action(), result.state()));
     }
 
     private Observable<State> networkError(State state, Action action) {
@@ -162,7 +162,7 @@ public class XkcdReducer
     }
 
     private Observable<State> goToLatest(State state, Action action) {
-        return downloadDefault(state, action).flatMap(result -> handleDownloadedLatest(result));
+        return downloadDefault(state, action).concatMap(result -> handleDownloadedLatest(result));
     }
 
     private ObservableSource<? extends State> handleDownloadedLatest(State state) {
@@ -244,17 +244,16 @@ public class XkcdReducer
     private Observable<State> download(final State initialState, Action action, final MethodSelector methodSelector) {
         return Observable.create((ObservableOnSubscribe<State>) emitter -> {
             emitter.onNext(State.create(initialState.state(), action));
-            reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD, action.payload())).flatMap((state) -> {
+            reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD, action.payload())).concatMap((state) -> {
                 emitter.onNext(state);
                 try {
                     XkcdResponse xkcdResponse = methodSelector.selectMethod(xkcdService).blockingGet();
                     XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
-                    CopyOnWriteStateBundle stateBundle = writeComicToRealm(state.state(), xkcdComic);
-                    return reduce(state, Action.create(COMIC_SAVED, stateBundle));
+                    return reduce(state, Action.create(COMIC_SAVED, writeComicToRealm(state.action().payload(), xkcdComic)));
                 } catch(Exception e) {
-                    return reduce(state, Action.create(NETWORK_ERROR, readNetworkErrorParamFromRealm(action.payload())));
+                    return reduce(state, Action.create(NETWORK_ERROR, readNetworkErrorParamFromRealm(state.action().payload())));
                 }
-            }).flatMap((state) -> {
+            }).concatMap((state) -> {
                 emitter.onNext(state);
                 return reduce(state, Action.create(XkcdActions.FINISH_DOWNLOAD));
             }).subscribe(state -> {
