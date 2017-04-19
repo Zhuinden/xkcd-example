@@ -11,7 +11,7 @@ import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
  */
 @AutoValue
 public abstract class Action implements Parcelable {
-    public static final Action INIT = Action.create("INIT");
+    static final Action INIT = Action.create("INIT");
 
     public abstract String type();
 

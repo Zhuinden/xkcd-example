@@ -1,14 +1,12 @@
 package com.zhuinden.xkcdexample;
 
-import com.bluelinelabs.logansquare.annotation.JsonField;
-
 /**
  * Created by Zhuinden on 2017.04.11..
  */
 
 public class XkcdMapper {
-    public XkcdComic from(XkcdResponse xkcdResponse) {
-        XkcdComic xkcdComic = new XkcdComic();
+    public XkcdEntity from(XkcdResponse xkcdResponse) {
+        XkcdEntity xkcdComic = new XkcdEntity();
         xkcdComic.setMonth(xkcdResponse.getMonth());
         xkcdComic.setNum(xkcdResponse.getNum());
         xkcdComic.setLink(xkcdResponse.getLink());

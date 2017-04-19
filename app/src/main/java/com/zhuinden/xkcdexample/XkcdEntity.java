@@ -1,7 +1,5 @@
 package com.zhuinden.xkcdexample;
 
-import com.bluelinelabs.logansquare.annotation.JsonField;
-
 import io.realm.RealmObject;
 import io.realm.annotations.Index;
 import io.realm.annotations.PrimaryKey;
@@ -9,7 +7,8 @@ import io.realm.annotations.PrimaryKey;
 /**
  * Created by Zhuinden on 2017.04.11..
  */
-public class XkcdComic extends RealmObject {
+public class XkcdEntity
+        extends RealmObject {
     @PrimaryKey
     private Integer num;
 

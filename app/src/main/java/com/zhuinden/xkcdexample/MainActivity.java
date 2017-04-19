@@ -63,8 +63,8 @@ import static com.zhuinden.xkcdexample.XkcdActions.OPEN_JUMP_DIALOG;
 import static com.zhuinden.xkcdexample.XkcdActions.OPEN_LINK;
 import static com.zhuinden.xkcdexample.XkcdActions.PREVIOUS_COMIC;
 import static com.zhuinden.xkcdexample.XkcdActions.RANDOM_COMIC;
-import static com.zhuinden.xkcdexample.XkcdActions.DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdActions.SHOW_ALT_TEXT;
+import static com.zhuinden.xkcdexample.XkcdActions.START_DOWNLOAD_CURRENT_OR_RETRY;
 import static com.zhuinden.xkcdexample.XkcdState.altText;
 import static com.zhuinden.xkcdexample.XkcdState.current;
 import static com.zhuinden.xkcdexample.XkcdState.link;
@@ -100,7 +100,7 @@ public class MainActivity
     }
 
     private boolean queryAndShowComicIfExists(int number) {
-        XkcdComic xkcdComic = getXkcdComic(number);
+        XkcdEntity xkcdComic = getXkcdComic(number);
         if(xkcdComic != null) {
             storeAndOpenComic(xkcdComic);
             return true;
@@ -108,16 +108,16 @@ public class MainActivity
         return false;
     }
 
-    private XkcdComic getXkcdComic(int number) {
-        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, number).findFirst();
+    private XkcdEntity getXkcdComic(int number) {
+        return realm.where(XkcdEntity.class).equalTo(XkcdComicFields.NUM, number).findFirst();
     }
 
-    private void storeAndOpenComic(XkcdComic xkcdComic) {
+    private void storeAndOpenComic(XkcdEntity xkcdComic) {
         this.xkcdComic = xkcdComic;
         updateUi(xkcdComic);
     }
 
-    private void updateUi(XkcdComic xkcdComic) {
+    private void updateUi(XkcdEntity xkcdComic) {
         getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
         Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
     }
@@ -147,11 +147,11 @@ public class MainActivity
 
     Realm realm;
 
-    RealmResults<XkcdComic> results;
+    RealmResults<XkcdEntity> results;
 
-    XkcdComic xkcdComic;
+    XkcdEntity xkcdComic;
 
-    RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
+    RealmChangeListener<RealmResults<XkcdEntity>> realmChangeListener = element -> {
         reduxStore.dispatch(Action.create(COMIC_CHANGED));
     };
 
@@ -234,7 +234,7 @@ public class MainActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         realm = Realm.getDefaultInstance();
-        results = realm.where(XkcdComic.class).findAll();
+        results = realm.where(XkcdEntity.class).findAll();
         results.addChangeListener(realmChangeListener);
 
         this.disposable = reduxStore.state().observeOn(AndroidSchedulers.mainThread()).subscribe(stateChange -> {
@@ -253,7 +253,7 @@ public class MainActivity
                 case JUMP_TO_NUMBER:
                 case GO_TO_LATEST:
                     if(!queryAndShowComicIfExists(current)) {
-                        reduxStore.dispatch(Action.create(DOWNLOAD_CURRENT_OR_RETRY));
+                        reduxStore.dispatch(Action.create(START_DOWNLOAD_CURRENT_OR_RETRY));
                     }
                     break;
                 case COMIC_CHANGED:
@@ -280,7 +280,7 @@ public class MainActivity
         });
 
 
-        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
+        Number maxNum = realm.where(XkcdEntity.class).max(XkcdComicFields.NUM);
         reduxStore.dispatch(Action.create(INITIALIZE,
                 putInitMax(new CopyOnWriteStateBundle(), maxNum != null ? maxNum.intValue() : -1)));
     }
@@ -318,7 +318,7 @@ public class MainActivity
                 reduxStore.dispatch(Action.create(OPEN_JUMP_DIALOG));
                 return true;
             case R.id.action_retry:
-                reduxStore.dispatch(Action.create(DOWNLOAD_CURRENT_OR_RETRY));
+                reduxStore.dispatch(Action.create(START_DOWNLOAD_CURRENT_OR_RETRY));
                 return true;
             case R.id.action_open_browser:
                 reduxStore.dispatch(Action.create(OPEN_IN_BROWSER));

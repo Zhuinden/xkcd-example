@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import retrofit2.Retrofit;
@@ -48,24 +48,29 @@ public class CustomApplication
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
-        XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
-        reduxStore = ReduxStore.builder().addReducer(xkcdReducer).addMiddleware(new Middleware() {
-            @Override
-            public Interception doBefore() {
-                return (store, action) -> {
-                    Log.i("MIDDLEWARE", "BEFORE: [" + store.getState() + "]");
-                    return Flowable.just(store.getState());
-                };
-            }
+        XkcdReducer xkcdReducer = new XkcdReducer();
+        reduxStore = ReduxStore.builder()
+                .addReducer(xkcdReducer)
+                .addMiddleware(new Middleware() {
+                    @Override
+                    public Interception doBefore() {
+                        return (store, action) -> {
+                            Log.i("MIDDLEWARE", "BEFORE: [" + store.getState() + "]");
+                            return Single.just(action);
+                        };
+                    }
 
-            @Override
-            public Interception doAfter() {
-                return (store, action) -> {
-                    Log.i("MIDDLEWARE", "AFTER: [" + store.getState() + "]");
-                    return Flowable.just(store.getState());
-                };
-            }
-        }).build();
+                    @Override
+                    public Interception doAfter() {
+                        return (store, action) -> {
+                            Log.i("MIDDLEWARE", "AFTER: [" + store.getState() + "]");
+                            return Single.just(action);
+                        };
+                    }
+                })
+                .addMiddleware(new XkcdMiddlewareDownload(xkcdService, xkcdMapper))
+                .addMiddleware(new XkcdMiddlewareRandom(random))
+                .build();
     }
 
     public static CustomApplication get(Context context) {

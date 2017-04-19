@@ -51,4 +51,7 @@ dependencies {
     compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
     compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
     compile 'com.jakewharton.rx:replaying-share:2.0.0'
+
+    // https://mvnrepository.com/artifact/org.javatuples/javatuples
+    compile group: 'org.javatuples', name: 'javatuples', version: '1.2'
 }

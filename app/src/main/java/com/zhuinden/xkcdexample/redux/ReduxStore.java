@@ -3,12 +3,15 @@ package com.zhuinden.xkcdexample.redux;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
+import org.javatuples.Pair;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -37,7 +40,8 @@ public class ReduxStore {
 
     public void setInitialState(State state) {
         if(this.state.getValue() != initialState) {
-            throw new IllegalStateException("Initial state cannot be set after internal state has already been modified!");
+            throw new IllegalStateException(
+                    "Initial state cannot be set after internal state has already been modified!");
         }
         this.state.accept(state);
     }
@@ -75,49 +79,48 @@ public class ReduxStore {
                 .filter(stateChange -> stateChange.previousState() != stateChange.newState());
     }
 
-    private Flowable<State> traverseBeforeChain(Flowable<State> stateFlowable, Action action, int index) {
+    private Single<Pair<State, Action>> traverseBeforeChain(Single<Pair<State, Action>> stateSingle, Action action, int index) {
         if(index >= middlewares.size()) {
-            return stateFlowable;
+            return stateSingle;
         }
         final Middleware middleware = middlewares.get(index);
-        if(stateFlowable == null) {
-            stateFlowable = middleware.executeBefore(this, state.getValue(), action);
+        if(stateSingle == null) {
+            stateSingle = middleware.executeBefore(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.executeBefore(this, newState, action));
+            stateSingle = stateSingle.flatMap(newState -> middleware.executeBefore(this,
+                    newState.getValue0(),
+                    newState.getValue1()));
         }
-        return traverseBeforeChain(stateFlowable, action, index + 1);
+        return traverseBeforeChain(stateSingle, action, index + 1);
     }
 
-    private Flowable<State> traverseAfterChain(Flowable<State> stateFlowable, Action action, int index) {
+    private Single<Pair<State, Action>> traverseAfterChain(Single<Pair<State, Action>> stateSingle, Action action, int index) {
         if(index < 0) {
-            return stateFlowable;
+            return stateSingle;
         }
         final Middleware middleware = middlewares.get(index);
-        if(stateFlowable == null) {
-            stateFlowable = middleware.executeAfter(this, state.getValue(), action);
+        if(stateSingle == null) {
+            stateSingle = middleware.executeAfter(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.executeAfter(this, newState, action));
+            stateSingle = stateSingle.flatMap(newState -> middleware.executeAfter(this,
+                    newState.getValue0(),
+                    newState.getValue1()));
         }
-        return traverseAfterChain(stateFlowable, action, index - 1);
+        return traverseAfterChain(stateSingle, action, index - 1);
     }
 
     public void dispatch(Action action) {
         final State initialState = state.getValue();
         boolean hasMiddlewares = !middlewares.isEmpty();
         if(!hasMiddlewares) {
-            reducer.reduce(initialState, action) //
-                    .concatMap((newState) -> Flowable.just(newState)) //
-                    .doOnNext(newState -> state.accept(newState)) //
+            Single.just(reducer.reduce(initialState, action)).doOnSuccess(newState -> state.accept(newState)) //
                     .subscribe();
         } else {
-            Flowable<State> stateFlowable = traverseBeforeChain(null, action, 0);
-            stateFlowable = stateFlowable.concatMap((state) -> reducer.reduce(state, action)) //
-                    .concatMap(newState -> Flowable.just(newState)) //
-                    .doOnNext(newState -> state.accept(newState));
-            traverseAfterChain(stateFlowable,
-                    action,
-                    middlewares.size() - 1) // TODO: "before" is executed only for initial, but "after" is executed for each emitted action! Maybe emission should be Single after all!
-                    .subscribe();
+            Single<Pair<State, Action>> stateSingle = traverseBeforeChain(null, action, 0);
+            stateSingle = stateSingle.map((state) -> //
+                    Pair.with(reducer.reduce(state.getValue0(), state.getValue1()), state.getValue1()))
+                    .doOnSuccess(newState -> state.accept(newState.getValue0()));
+            traverseAfterChain(stateSingle, action, middlewares.size() - 1).subscribe();
         }
     }
 }
