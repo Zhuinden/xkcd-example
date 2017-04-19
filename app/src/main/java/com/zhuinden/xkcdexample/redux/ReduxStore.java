@@ -79,11 +79,11 @@ public class ReduxStore {
         if(index >= middlewares.size()) {
             return stateFlowable;
         }
-        Middleware middleware = middlewares.get(index);
+        final Middleware middleware = middlewares.get(index);
         if(stateFlowable == null) {
             stateFlowable = middleware.doBefore().reduce(state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middlewares.get(index).doBefore().reduce(newState, action));
+            stateFlowable = stateFlowable.concatMap(newState -> middleware.doBefore().reduce(newState, action));
         }
         return traverseChain(stateFlowable, action, index + 1);
     }
