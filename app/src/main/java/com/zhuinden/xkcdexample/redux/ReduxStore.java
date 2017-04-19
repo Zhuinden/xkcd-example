@@ -57,14 +57,17 @@ public class ReduxStore {
     }
 
     public Flowable<StateChange> state() {
-        return state.toFlowable(BackpressureStrategy.MISSING).scan(StateChange.create(initialState, initialState),
-                (stateChange, newState) -> StateChange.create(stateChange.newState(), newState))
+        return state.toFlowable(BackpressureStrategy.MISSING) //
+                .scan(StateChange.create(initialState, initialState), //
+                        (stateChange, newState) -> StateChange.create(stateChange.newState(), newState)) //
                 .filter(stateChange -> stateChange.previousState() != stateChange.newState());
     }
 
     public void dispatch(Action action) {
         final State currentState = state.getValue();
-        reducer.reduce(currentState, action).concatMap((newState) -> Flowable.just(newState)).doOnNext(newState -> state.accept(newState))
+        reducer.reduce(currentState, action) //
+                .concatMap((newState) -> Flowable.just(newState)) //
+                .doOnNext(newState -> state.accept(newState)) //
                 .subscribe();
     }
 }
