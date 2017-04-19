@@ -45,7 +45,8 @@ public class CustomApplication
                 .build();
         Realm.setDefaultConfiguration(realmConfiguration);
         retrofit = new Retrofit.Builder().baseUrl("http://xkcd.com/")
-                .addConverterFactory(LoganSquareConverterFactory.create()).addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(LoganSquareConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
         XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
@@ -53,14 +54,17 @@ public class CustomApplication
             @Override
             public Reducer doBefore() {
                 return (state, action) -> {
-                    Log.i("MIDDLEWARE", "[" + state + "] [" + action + "]");
+                    Log.i("MIDDLEWARE", "BEFORE: [" + state + "]");
                     return Flowable.just(state);
                 };
             }
 
             @Override
             public Reducer doAfter() {
-                return (state, action) -> Flowable.just(state);
+                return (state, action) -> {
+                    Log.i("MIDDLEWARE", "AFTER: [" + state + "]");
+                    return Flowable.just(state);
+                };
             }
         }).build();
     }
