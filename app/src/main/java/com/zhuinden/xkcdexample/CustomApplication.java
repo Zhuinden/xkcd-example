@@ -2,14 +2,18 @@ package com.zhuinden.xkcdexample;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
 
 import com.github.aurae.retrofit2.LoganSquareConverterFactory;
+import com.zhuinden.xkcdexample.redux.Middleware;
+import com.zhuinden.xkcdexample.redux.Reducer;
 import com.zhuinden.xkcdexample.redux.ReduxStore;
 
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import io.reactivex.Flowable;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import retrofit2.Retrofit;
@@ -45,7 +49,20 @@ public class CustomApplication
                 .build();
         xkcdService = retrofit.create(XkcdService.class);
         XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
-        reduxStore = ReduxStore.builder().addReducer(xkcdReducer).build();
+        reduxStore = ReduxStore.builder().addReducer(xkcdReducer).addMiddleware(new Middleware() {
+            @Override
+            public Reducer doBefore() {
+                return (state, action) -> {
+                    Log.i("MIDDLEWARE", "[" + state + "] [" + action + "]");
+                    return Flowable.just(state);
+                };
+            }
+
+            @Override
+            public Reducer doAfter() {
+                return (state, action) -> Flowable.just(state);
+            }
+        }).build();
     }
 
     public static CustomApplication get(Context context) {

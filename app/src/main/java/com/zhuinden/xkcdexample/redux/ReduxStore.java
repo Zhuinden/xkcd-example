@@ -3,6 +3,10 @@ package com.zhuinden.xkcdexample.redux;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 
@@ -11,13 +15,15 @@ import io.reactivex.Flowable;
  */
 
 public class ReduxStore {
-    private ReduxStore(RootReducer rootReducer) {
+    private ReduxStore(RootReducer rootReducer, List<Middleware> middlewares) {
         this.reducer = rootReducer;
+        this.middlewares = Collections.unmodifiableList(middlewares);
     }
 
     private final State initialState = State.create(new CopyOnWriteStateBundle(), Action.INIT);
 
     private RootReducer reducer;
+    private List<Middleware> middlewares;
 
     BehaviorRelay<State> state = BehaviorRelay.createDefault(initialState);
 
@@ -45,14 +51,20 @@ public class ReduxStore {
         }
 
         private RootReducer.Builder rootReducerBuilder = RootReducer.builder();
+        private LinkedList<Middleware> middlewares = new LinkedList<>();
 
         public Builder addReducer(Reducer reducer) {
             rootReducerBuilder.addReducer(reducer);
             return this;
         }
 
+        public Builder addMiddleware(Middleware middleware) {
+            middlewares.add(middleware);
+            return this;
+        }
+
         public ReduxStore build() {
-            return new ReduxStore(rootReducerBuilder.build());
+            return new ReduxStore(rootReducerBuilder.build(), middlewares);
         }
     }
 
@@ -63,11 +75,33 @@ public class ReduxStore {
                 .filter(stateChange -> stateChange.previousState() != stateChange.newState());
     }
 
+    private Flowable<State> traverseChain(Flowable<State> stateFlowable, Action action, int index) {
+        if(index >= middlewares.size()) {
+            return stateFlowable;
+        }
+        Middleware middleware = middlewares.get(index);
+        if(stateFlowable == null) {
+            stateFlowable = middleware.doBefore().reduce(state.getValue(), action);
+        } else {
+            stateFlowable = stateFlowable.concatMap(newState -> middlewares.get(index).doBefore().reduce(newState, action));
+        }
+        return traverseChain(stateFlowable, action, index + 1);
+    }
+
     public void dispatch(Action action) {
-        final State currentState = state.getValue();
-        reducer.reduce(currentState, action) //
-                .concatMap((newState) -> Flowable.just(newState)) //
-                .doOnNext(newState -> state.accept(newState)) //
-                .subscribe();
+        final State initialState = state.getValue();
+        boolean hasMiddlewares = !middlewares.isEmpty();
+        if(!hasMiddlewares) {
+            reducer.reduce(initialState, action) //
+                    .concatMap((newState) -> Flowable.just(newState)) //
+                    .doOnNext(newState -> state.accept(newState)) //
+                    .subscribe();
+        } else {
+            Flowable<State> stateFlowable = traverseChain(null, action, 0);
+            stateFlowable.concatMap((state) -> reducer.reduce(state, action)) //
+                    .doOnNext(newState -> state.accept(newState)) //
+                    .subscribe();
+            // TODO: add doAfter reducers
+        }
     }
 }
