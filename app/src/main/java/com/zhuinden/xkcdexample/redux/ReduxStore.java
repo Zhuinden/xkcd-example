@@ -81,9 +81,9 @@ public class ReduxStore {
         }
         final Middleware middleware = middlewares.get(index);
         if(stateFlowable == null) {
-            stateFlowable = middleware.doBefore().reduce(state.getValue(), action);
+            stateFlowable = middleware.doBefore().intercept(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.doBefore().reduce(newState, action));
+            stateFlowable = stateFlowable.concatMap(newState -> middleware.doBefore().intercept(this, newState, action));
         }
         return traverseBeforeChain(stateFlowable, action, index + 1);
     }
@@ -94,9 +94,9 @@ public class ReduxStore {
         }
         final Middleware middleware = middlewares.get(index);
         if(stateFlowable == null) {
-            stateFlowable = middleware.doAfter().reduce(state.getValue(), action);
+            stateFlowable = middleware.doAfter().intercept(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.doAfter().reduce(newState, action));
+            stateFlowable = stateFlowable.concatMap(newState -> middleware.doAfter().intercept(this, newState, action));
         }
         return traverseAfterChain(stateFlowable, action, index - 1);
     }

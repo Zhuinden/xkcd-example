@@ -1,11 +1,17 @@
 package com.zhuinden.xkcdexample.redux;
 
+import io.reactivex.Flowable;
+
 /**
  * Created by Owner on 2017. 04. 19..
  */
 
 public interface Middleware {
-    Reducer doBefore();
+    interface Interception {
+        Flowable<State> intercept(ReduxStore reduxStore, State state, Action action);
+    }
 
-    Reducer doAfter();
+    Interception doBefore();
+
+    Interception doAfter();
 }

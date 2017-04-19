@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.github.aurae.retrofit2.LoganSquareConverterFactory;
 import com.zhuinden.xkcdexample.redux.Middleware;
-import com.zhuinden.xkcdexample.redux.Reducer;
 import com.zhuinden.xkcdexample.redux.ReduxStore;
 
 import java.util.Random;
@@ -52,16 +51,16 @@ public class CustomApplication
         XkcdReducer xkcdReducer = new XkcdReducer(xkcdService, xkcdMapper, random);
         reduxStore = ReduxStore.builder().addReducer(xkcdReducer).addMiddleware(new Middleware() {
             @Override
-            public Reducer doBefore() {
-                return (state, action) -> {
+            public Interception doBefore() {
+                return (store, state, action) -> {
                     Log.i("MIDDLEWARE", "BEFORE: [" + state + "]");
                     return Flowable.just(state);
                 };
             }
 
             @Override
-            public Reducer doAfter() {
-                return (state, action) -> {
+            public Interception doAfter() {
+                return (store, state, action) -> {
                     Log.i("MIDDLEWARE", "AFTER: [" + state + "]");
                     return Flowable.just(state);
                 };
