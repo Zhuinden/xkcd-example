@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.reactivex.Observable;
+import io.reactivex.Flowable;
 
 /**
  * Created by Owner on 2017. 04. 13..
@@ -38,12 +38,12 @@ public class RootReducer
         }
     }
 
-    public Observable<State> reduce(final State state, final Action action) {
-        List<Observable<State>> states = new LinkedList<>();
+    public Flowable<State> reduce(final State state, final Action action) {
+        List<Flowable<State>> states = new LinkedList<>();
         for(Reducer reducer : reducers) {
             states.add(reducer.reduce(state, action));
         }
-        return Observable.zip(states, objects -> {
+        return Flowable.zip(states, objects -> {
             for(Object object : objects) {
                 State newState = (State) object;
                 if(newState != state) {

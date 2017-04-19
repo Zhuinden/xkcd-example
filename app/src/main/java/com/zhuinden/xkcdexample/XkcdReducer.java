@@ -10,9 +10,9 @@ import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 import java.io.IOException;
 import java.util.Random;
 
-import io.reactivex.Observable;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.ObservableSource;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.realm.Realm;
@@ -62,7 +62,7 @@ public class XkcdReducer
 
     @SuppressLint("NewApi")
     @Override
-    public Observable<State> reduce(State state, Action action) {
+    public Flowable<State> reduce(State state, Action action) {
         switch(action.type()) {
             case START_DOWNLOAD:
                 return startDownload(state, action);
@@ -93,10 +93,10 @@ public class XkcdReducer
             case COMIC_CHANGED:
                 return createState(action, state.state());
         }
-        return Observable.just(state);
+        return Flowable.just(state);
     }
 
-    private Observable<State> initialize(State state, Action action) {
+    private Flowable<State> initialize(State state, Action action) {
         int current = current(state.state());
         if(current == 0) {
             return downloadDefault(state, action).concatMap(result -> {
@@ -113,17 +113,17 @@ public class XkcdReducer
         }
     }
 
-    private Observable<State> comicSaved(State state, Action action) {
+    private Flowable<State> comicSaved(State state, Action action) {
         CopyOnWriteStateBundle stateBundle = state.state();
         stateBundle = putCurrent(stateBundle, number(action.payload()));
         return createState(action, stateBundle);
     }
 
-    private Observable<State> downloadCurrent(State state, Action action) {
+    private Flowable<State> downloadCurrent(State state, Action action) {
         return downloadNumber(state, action, current(state.state())).concatMap(result -> createState(result.action(), result.state()));
     }
 
-    private Observable<State> networkError(State state, Action action) {
+    private Flowable<State> networkError(State state, Action action) {
         int maxNum = initMax(action.payload());
         int max = max(state.state());
         CopyOnWriteStateBundle stateBundle = state.state();
@@ -134,7 +134,7 @@ public class XkcdReducer
         return createState(action, stateBundle);
     }
 
-    private Observable<State> jumpToNumber(State state, Action action) {
+    private Flowable<State> jumpToNumber(State state, Action action) {
         int number = number(action.payload());
         int max = max(state.state());
         CopyOnWriteStateBundle stateBundle = state.state();
@@ -146,7 +146,7 @@ public class XkcdReducer
         }
     }
 
-    private Observable<State> retryDownload(State state, Action action) {
+    private Flowable<State> retryDownload(State state, Action action) {
         int current = current(state.state());
         if(current == 0) {
             return goToLatest(state, action);
@@ -155,11 +155,11 @@ public class XkcdReducer
         }
     }
 
-    private Observable<State> goToLatest(State state, Action action) {
+    private Flowable<State> goToLatest(State state, Action action) {
         return downloadDefault(state, action).concatMap(result -> handleDownloadedLatest(result));
     }
 
-    private ObservableSource<? extends State> handleDownloadedLatest(State state) {
+    private Flowable<? extends State> handleDownloadedLatest(State state) {
         CopyOnWriteStateBundle stateBundle = state.state();
         int number = number(state.action().payload());
         int max = max(state.state());
@@ -172,15 +172,15 @@ public class XkcdReducer
         return createState(state.action(), stateBundle);
     }
 
-    private Observable<State> finishDownload(State state, Action action) {
+    private Flowable<State> finishDownload(State state, Action action) {
         return changeDownloadState(state, action, false);
     }
 
-    private Observable<State> startDownload(State state, Action action) {
+    private Flowable<State> startDownload(State state, Action action) {
         return changeDownloadState(state, action, true);
     }
 
-    private Observable<State> randomComic(State state, Action action) {
+    private Flowable<State> randomComic(State state, Action action) {
         CopyOnWriteStateBundle stateBundle = state.state();
         boolean isDownloading = isDownloading(stateBundle);
         final int max = max(state.state());
@@ -190,7 +190,7 @@ public class XkcdReducer
         return createState(action, stateBundle);
     }
 
-    private Observable<State> previousComic(State state, Action action) {
+    private Flowable<State> previousComic(State state, Action action) {
         CopyOnWriteStateBundle stateBundle = state.state();
         int current = current(stateBundle);
         boolean isDownloading = isDownloading(stateBundle);
@@ -200,7 +200,7 @@ public class XkcdReducer
         return createState(action, stateBundle);
     }
 
-    private Observable<State> nextComic(State state, Action action) {
+    private Flowable<State> nextComic(State state, Action action) {
         CopyOnWriteStateBundle stateBundle = state.state();
         int current = current(stateBundle);
         boolean isDownloading = isDownloading(stateBundle);
@@ -211,21 +211,21 @@ public class XkcdReducer
         return createState(action, stateBundle);
     }
 
-    private Observable<State> changeDownloadState(State state, Action action, boolean isDownloading) {
+    private Flowable<State> changeDownloadState(State state, Action action, boolean isDownloading) {
         CopyOnWriteStateBundle bundle = putDownloading(state.state(), isDownloading);
         return createState(action, bundle);
     }
 
-    private Observable<State> createState(Action action, CopyOnWriteStateBundle stateBundle) {
-        return Observable.just(State.create(stateBundle, action));
+    private Flowable<State> createState(Action action, CopyOnWriteStateBundle stateBundle) {
+        return Flowable.just(State.create(stateBundle, action));
     }
 
     @SuppressWarnings("Convert2MethodRef")
-    private Observable<State> downloadDefault(State state, Action action) {
+    private Flowable<State> downloadDefault(State state, Action action) {
         return download(state, action, service -> service.getDefault());
     }
 
-    private Observable<State> downloadNumber(State state, Action action, int number) {
+    private Flowable<State> downloadNumber(State state, Action action, int number) {
         return download(state, action, service -> service.getNumber(number));
     }
 
@@ -235,8 +235,8 @@ public class XkcdReducer
     }
 
     @SuppressWarnings("NewApi")
-    private Observable<State> download(final State initialState, Action action, final MethodSelector methodSelector) {
-        return Observable.create((ObservableOnSubscribe<State>) emitter -> {
+    private Flowable<State> download(final State initialState, Action action, final MethodSelector methodSelector) {
+        return Flowable.create((FlowableOnSubscribe<State>) emitter -> {
             emitter.onNext(State.create(initialState.state(), action));
             reduce(initialState, Action.create(XkcdActions.START_DOWNLOAD, action.payload())).concatMap((state) -> {
                 emitter.onNext(state);
@@ -256,7 +256,7 @@ public class XkcdReducer
                 emitter.onNext(state);
                 emitter.onComplete();
             });
-        }).subscribeOn(Schedulers.io());
+        }, BackpressureStrategy.MISSING).subscribeOn(Schedulers.io());
     }
 
     @SuppressWarnings("NewApi")

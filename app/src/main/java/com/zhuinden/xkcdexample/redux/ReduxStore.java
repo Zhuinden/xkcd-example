@@ -3,10 +3,8 @@ package com.zhuinden.xkcdexample.redux;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.zhuinden.xkcdexample.util.CopyOnWriteStateBundle;
 
-import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Function;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 
 /**
  * Created by Zhuinden on 2017.04.12..
@@ -58,17 +56,15 @@ public class ReduxStore {
         }
     }
 
-    public Observable<StateChange> state() {
-        return state.scan(StateChange.create(initialState, initialState),
+    public Flowable<StateChange> state() {
+        return state.toFlowable(BackpressureStrategy.MISSING).scan(StateChange.create(initialState, initialState),
                 (stateChange, newState) -> StateChange.create(stateChange.newState(), newState))
                 .filter(stateChange -> stateChange.previousState() != stateChange.newState());
     }
 
     public void dispatch(Action action) {
         final State currentState = state.getValue();
-        reducer.reduce(currentState, action)
-                .concatMap((newState) -> Observable.just(StateChange.create(currentState, newState)))
-                .doOnNext(stateChange -> state.accept(stateChange.newState()))
+        reducer.reduce(currentState, action).concatMap((newState) -> Flowable.just(newState)).doOnNext(newState -> state.accept(newState))
                 .subscribe();
     }
 }
