@@ -81,9 +81,9 @@ public class ReduxStore {
         }
         final Middleware middleware = middlewares.get(index);
         if(stateFlowable == null) {
-            stateFlowable = middleware.doBefore().intercept(this, state.getValue(), action);
+            stateFlowable = middleware.executeBefore(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.doBefore().intercept(this, newState, action));
+            stateFlowable = stateFlowable.concatMap(newState -> middleware.executeBefore(this, newState, action));
         }
         return traverseBeforeChain(stateFlowable, action, index + 1);
     }
@@ -94,9 +94,9 @@ public class ReduxStore {
         }
         final Middleware middleware = middlewares.get(index);
         if(stateFlowable == null) {
-            stateFlowable = middleware.doAfter().intercept(this, state.getValue(), action);
+            stateFlowable = middleware.executeAfter(this, state.getValue(), action);
         } else {
-            stateFlowable = stateFlowable.concatMap(newState -> middleware.doAfter().intercept(this, newState, action));
+            stateFlowable = stateFlowable.concatMap(newState -> middleware.executeAfter(this, newState, action));
         }
         return traverseAfterChain(stateFlowable, action, index - 1);
     }
@@ -111,12 +111,12 @@ public class ReduxStore {
                     .subscribe();
         } else {
             Flowable<State> stateFlowable = traverseBeforeChain(null, action, 0);
-            stateFlowable = stateFlowable.concatMap((state) -> reducer.reduce(state, action));
+            stateFlowable = stateFlowable.concatMap((state) -> reducer.reduce(state, action)) //
+                    .concatMap(newState -> Flowable.just(newState)) //
+                    .doOnNext(newState -> state.accept(newState));
             traverseAfterChain(stateFlowable,
                     action,
                     middlewares.size() - 1) // TODO: "before" is executed only for initial, but "after" is executed for each emitted action! Maybe emission should be Single after all!
-                    .concatMap(newState -> Flowable.just(newState))
-                    .doOnNext(newState -> state.accept(newState)) //
                     .subscribe();
         }
     }

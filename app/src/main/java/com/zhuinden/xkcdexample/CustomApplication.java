@@ -52,17 +52,17 @@ public class CustomApplication
         reduxStore = ReduxStore.builder().addReducer(xkcdReducer).addMiddleware(new Middleware() {
             @Override
             public Interception doBefore() {
-                return (store, state, action) -> {
-                    Log.i("MIDDLEWARE", "BEFORE: [" + state + "]");
-                    return Flowable.just(state);
+                return (store, action) -> {
+                    Log.i("MIDDLEWARE", "BEFORE: [" + store.getState() + "]");
+                    return Flowable.just(store.getState());
                 };
             }
 
             @Override
             public Interception doAfter() {
-                return (store, state, action) -> {
-                    Log.i("MIDDLEWARE", "AFTER: [" + state + "]");
-                    return Flowable.just(state);
+                return (store, action) -> {
+                    Log.i("MIDDLEWARE", "AFTER: [" + store.getState() + "]");
+                    return Flowable.just(store.getState());
                 };
             }
         }).build();

@@ -6,12 +6,22 @@ import io.reactivex.Flowable;
  * Created by Owner on 2017. 04. 19..
  */
 
-public interface Middleware {
-    interface Interception {
-        Flowable<State> intercept(ReduxStore reduxStore, State state, Action action);
+public abstract class Middleware {
+    public interface Interception {
+        Flowable<State> intercept(ReduxStore reduxStore, Action action);
     }
 
-    Interception doBefore();
+    Flowable<State> executeBefore(ReduxStore reduxStore, State state, Action action) {
+        doBefore().intercept(reduxStore, action);
+        return Flowable.just(state);
+    }
 
-    Interception doAfter();
+    Flowable<State> executeAfter(ReduxStore reduxStore, State state, Action action) {
+        doAfter().intercept(reduxStore, action);
+        return Flowable.just(state);
+    }
+
+    public abstract Interception doBefore();
+
+    public abstract Interception doAfter();
 }
