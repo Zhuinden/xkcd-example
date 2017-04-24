@@ -21,6 +21,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -333,6 +334,9 @@ public class MainActivity
                 isDownloading = true;
                 Response<XkcdResponse> _xkcdResponse = methodSelector.selectMethod(xkcdService).execute();
                 XkcdResponse xkcdResponse = _xkcdResponse.body();
+                if(xkcdResponse == null) {
+                    throw new IOException("The response body was null [" + _xkcdResponse.errorBody() + "]");
+                }
                 XkcdComic xkcdComic = xkcdMapper.from(xkcdResponse);
                 try(Realm r = Realm.getDefaultInstance()) {
                     r.executeTransaction(realm -> {
@@ -344,6 +348,7 @@ public class MainActivity
                     });
                 }
             } catch(IOException e) {
+                Log.e(TAG, "Network error occurred", e);
                 runOnUiThread(MainActivity.this::handleNetworkError);
             } finally {
                 isDownloading = false;
