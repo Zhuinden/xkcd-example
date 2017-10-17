@@ -17,6 +17,7 @@ package com.zhuinden.xkcdexample;
 
 import android.content.Context;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -32,14 +33,11 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.zhuinden.xkcdexample.databinding.ActivityMainBinding;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import butterknife.OnLongClick;
-import io.realm.Realm;
 
 public class XkcdActivity
         extends AppCompatActivity
@@ -51,25 +49,27 @@ public class XkcdActivity
     @BindView(R.id.xkcd_image)
     ImageView image;
 
-    @OnClick(R.id.xkcd_previous)
+    //@OnClick(R.id.xkcd_previous) // moved to databind
     public void previous() {
         xkcdPresenter.openPreviousComic();
     }
 
-    @OnClick(R.id.xkcd_next)
+    //@OnClick(R.id.xkcd_next) // moved to databind
     public void next() {
         xkcdPresenter.openNextComic();
     }
 
-    @OnClick(R.id.xkcd_random)
+    //@OnClick(R.id.xkcd_random) // moved to databind
     public void random() {
         xkcdPresenter.openRandomComic();
     }
 
     @Override
     public void updateUi(XkcdComic xkcdComic) {
+        // noinspection ConstantConditions
         getSupportActionBar().setTitle("#" + xkcdComic.getNum() + ": " + xkcdComic.getTitle());
-        Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image);
+        //Glide.with(this).load(xkcdComic.getImg()).diskCacheStrategy(DiskCacheStrategy.ALL).into(image); // moved to binding adapter
+        binding.setComic(xkcdComic);
     }
 
     @OnLongClick(R.id.xkcd_image)
@@ -82,7 +82,7 @@ public class XkcdActivity
         Toast.makeText(this, xkcdComic.getAlt(), Toast.LENGTH_LONG).show();
     }
 
-    @OnClick(R.id.xkcd_image)
+    // @OnClick(R.id.xkcd_image) // moved to databind
     public void clickImage() {
         xkcdPresenter.openLink();
     }
@@ -91,8 +91,6 @@ public class XkcdActivity
     public void openLink(String uri) {
         openUriWithBrowser(Uri.parse(uri));
     }
-
-    Realm realm;
 
     AlertDialog jumpDialog;
 
@@ -149,22 +147,23 @@ public class XkcdActivity
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // always is needed here
     }
 
+    ActivityMainBinding binding; // for data-binding
+
     @Override
     @SuppressWarnings("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
+        RealmManager realmManager = Injector.get().realmManager();
+        realmManager.openLocalInstance();
         super.onCreate(savedInstanceState);
-        realm = Realm.getDefaultInstance();
-        xkcdPresenter = new XkcdPresenter(realm,
-                CustomApplication.get(this).xkcdMapper(),
-                CustomApplication.get(this).xkcdService(),
-                CustomApplication.get(this).executor(),
-                CustomApplication.get(this).random());
+        xkcdPresenter = Injector.get().xkcdPresenter();
         if(savedInstanceState != null) {
             xkcdPresenter.restoreState(savedInstanceState.getParcelable("PRESENTER_STATE"));
         }
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main); // replaced by databind
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         ButterKnife.bind(this);
         xkcdPresenter.attachView(this);
+        binding.setActivity(this);
     }
 
     @Override
@@ -176,8 +175,8 @@ public class XkcdActivity
     @Override
     protected void onDestroy() {
         xkcdPresenter.detachView();
-        realm.close();
-        realm = null;
+        RealmManager realmManager = Injector.get().realmManager();
+        realmManager.closeLocalInstance();
         cancelJumpDialogIfShowing();
         super.onDestroy();
     }

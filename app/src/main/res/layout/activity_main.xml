@@ -1,44 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
-        android:id="@+id/xkcd_image"
+    <data>
+
+        <variable
+            name="activity"
+            type="com.zhuinden.xkcdexample.XkcdActivity" />
+
+        <variable
+            name="comic"
+            type="com.zhuinden.xkcdexample.XkcdComic" />
+    </data>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/xkcd_previous"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:layout_centerInParent="true"/>
+        android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/xkcd_previous"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/previous"/>
+        <ImageView
+            android:id="@+id/xkcd_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/xkcd_previous"
+            android:layout_centerInParent="true"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            app:glideImageSrc="@{comic.getImg()}"
+            android:onClick="@{() -> activity.clickImage()}" />
 
-    <Button
-        android:id="@+id/xkcd_random"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="@string/random_comic"/>
+        <Button
+            android:id="@+id/xkcd_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginLeft="16dp"
+            android:onClick="@{() -> activity.previous()}"
+            android:text="@string/previous" />
 
-    <Button
-        android:id="@+id/xkcd_next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="@string/next"/>
-</RelativeLayout>
+        <Button
+            android:id="@+id/xkcd_random"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="16dp"
+            android:onClick="@{() -> activity.random()}"
+            android:text="@string/random_comic" />
+
+        <Button
+            android:id="@+id/xkcd_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginRight="16dp"
+            android:onClick="@{() -> activity.next()}"
+            android:text="@string/next" />
+    </RelativeLayout>
+</layout>

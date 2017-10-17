@@ -1,12 +1,18 @@
 package com.zhuinden.xkcdexample;
 
-import com.bluelinelabs.logansquare.annotation.JsonField;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Created by Zhuinden on 2017.04.11..
  */
 
+@Singleton
 public class XkcdMapper {
+    @Inject
+    XkcdMapper() {
+    }
+
     public XkcdComic from(XkcdResponse xkcdResponse) {
         XkcdComic xkcdComic = new XkcdComic();
         xkcdComic.setMonth(xkcdResponse.getMonth());

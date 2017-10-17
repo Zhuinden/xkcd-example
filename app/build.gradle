@@ -24,6 +24,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    dataBinding {
+        enabled = true
+    }
 }
 
 dependencies {
@@ -40,7 +44,16 @@ dependencies {
     compile "com.github.aurae.retrofit2:converter-logansquare:1.4.1"
     compile 'com.github.bumptech.glide:glide:3.7.0'
     annotationProcessor 'dk.ilios:realmfieldnameshelper:1.1.1'
-    compile 'com.jakewharton:butterknife:8.5.1'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
-    compile 'com.github.Zhuinden:state-bundle:1.1.4'
+    compile 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+    compile 'com.github.Zhuinden:state-bundle:1.2.0'
+
+    compile 'com.google.dagger:dagger:2.12'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.12'
+
+    annotationProcessor "com.android.databinding:compiler:2.3.3"
+}
+
+configurations.all {
+    resolutionStrategy.force "com.google.code.findbugs:jsr305:3.0.2"
 }

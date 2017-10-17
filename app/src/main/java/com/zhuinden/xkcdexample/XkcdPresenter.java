@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.Executor;
 
+import javax.inject.Inject;
+
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -16,7 +18,17 @@ import retrofit2.Response;
  * Created by Owner on 2017. 04. 16..
  */
 
+// unscoped!
 public class XkcdPresenter {
+    @Inject
+    public XkcdPresenter(RealmManager realmManager, XkcdMapper xkcdMapper, XkcdService xkcdService, Executor executor, Random random) {
+        this.realmManager = realmManager;
+        this.xkcdMapper = xkcdMapper;
+        this.xkcdService = xkcdService;
+        this.executor = executor;
+        this.random = random;
+    }
+
     public interface ViewContract {
         void updateUi(XkcdComic xkcdComic);
 
@@ -59,7 +71,7 @@ public class XkcdPresenter {
     ////////
 
     private void onAttach() {
-        results = realm.where(XkcdComic.class).findAll();
+        results = realmManager.getLocalInstance().where(XkcdComic.class).findAll();
         results.addChangeListener(realmChangeListener);
     }
 
@@ -74,30 +86,22 @@ public class XkcdPresenter {
         }
     }
 
-    Realm realm;
-
     RealmResults<XkcdComic> results;
 
     XkcdComic xkcdComic;
 
-    XkcdMapper xkcdMapper;
+    private RealmManager realmManager;
 
-    XkcdService xkcdService;
+    private final XkcdMapper xkcdMapper;
+
+    private final XkcdService xkcdService;
 
     Executor executor;
 
     Random random;
 
-    public XkcdPresenter(Realm realm, XkcdMapper xkcdMapper, XkcdService xkcdService, Executor executor, Random random) {
-        this.realm = realm;
-        this.xkcdMapper = xkcdMapper;
-        this.xkcdService = xkcdService;
-        this.executor = executor;
-        this.random = random;
-    }
-
     RealmChangeListener<RealmResults<XkcdComic>> realmChangeListener = element -> {
-        if(!realm.isClosed()) {
+        if(!realmManager.isClosed()) {
             queryAndShowComicIfExists();
         }
     };
@@ -161,7 +165,7 @@ public class XkcdPresenter {
     }
 
     private XkcdComic getCurrentXkcdComic() {
-        return realm.where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
+        return realmManager.getLocalInstance().where(XkcdComic.class).equalTo(XkcdComicFields.NUM, current).findFirst();
     }
 
     private void storeAndOpenComic(XkcdComic xkcdComic) {
@@ -258,6 +262,7 @@ public class XkcdPresenter {
                 }
             } catch(IOException e) {
                 if(viewContract != null) {
+                    //noinspection Convert2MethodRef
                     viewContract.doOnUiThread(() -> handleNetworkError());
                 }
             } finally {
@@ -274,7 +279,7 @@ public class XkcdPresenter {
             }
             return;
         }
-        Number maxNum = realm.where(XkcdComic.class).max(XkcdComicFields.NUM);
+        Number maxNum = realmManager.getLocalInstance().where(XkcdComic.class).max(XkcdComicFields.NUM);
         if(maxNum == null) { // no image downloaded yet at all
             if(viewContract != null) {
                 viewContract.showNetworkError();
